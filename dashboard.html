@@ -1,0 +1,3521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VAM Batch Generator</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #242836;
+    --border: #2e3345;
+    --text: #e4e6f0;
+    --text-dim: #8b8fa3;
+    --accent: #6366f1;
+    --accent-hover: #818cf8;
+    --green: #22c55e;
+    --orange: #f59e0b;
+    --red: #ef4444;
+    --radius: 8px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  header p {
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+  .field {
+    margin-bottom: 20px;
+  }
+  .field:last-child {
+    margin-bottom: 0;
+  }
+  label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  label .hint {
+    font-weight: 400;
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+  input[type="text"], textarea, select {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+  }
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238b8fa3' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+  .radio-group {
+    display: flex;
+    gap: 8px;
+  }
+  .radio-group label {
+    flex: 1;
+    text-align: center;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    margin-bottom: 0;
+  }
+  .radio-group input[type="radio"] {
+    display: none;
+  }
+  .radio-group input[type="radio"]:checked + span {
+    color: var(--accent);
+  }
+  .radio-group label:has(input:checked) {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.1);
+  }
+  .radio-group label:hover {
+    border-color: var(--accent-hover);
+  }
+  .checkbox-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .checkbox-grid label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    margin-bottom: 0;
+  }
+  .checkbox-grid label:hover {
+    border-color: var(--accent-hover);
+  }
+  .checkbox-grid label:has(input:checked) {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.08);
+  }
+  .checkbox-grid input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+  }
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .suggestions button {
+    padding: 4px 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .suggestions button:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+  .conditional {
+    display: none;
+  }
+  .conditional.visible {
+    display: block;
+  }
+  .generate-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: inherit;
+    margin-top: 8px;
+  }
+  .generate-btn:hover {
+    background: var(--accent-hover);
+  }
+  .output-section {
+    display: none;
+  }
+  .output-section.visible {
+    display: block;
+  }
+  .output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .output-header .char-count {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .output-area {
+    width: 100%;
+    min-height: 300px;
+    max-height: 500px;
+    padding: 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 12px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+  }
+  .copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--green);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    margin-top: 12px;
+  }
+  .copy-btn:hover {
+    opacity: 0.9;
+  }
+  .copy-btn.copied {
+    background: var(--accent);
+  }
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+  datalist { background: var(--surface2); }
+  .defaults-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .defaults-toggle .arrow {
+    font-size: 12px;
+    color: var(--text-dim);
+    transition: transform 0.2s;
+  }
+  .defaults-toggle .arrow.open {
+    transform: rotate(180deg);
+  }
+  .defaults-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+  .defaults-body.open {
+    max-height: 800px;
+  }
+  .defaults-body .field:first-child {
+    margin-top: 16px;
+  }
+  .saved-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--green);
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 8px;
+  }
+  .reset-btn {
+    padding: 6px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .reset-btn:hover {
+    border-color: var(--red);
+    color: var(--red);
+  }
+  /* Ad Cards (Iteration Mode) */
+  .ad-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 8px;
+  }
+  .ad-card:hover { border-color: var(--accent-hover); }
+  .ad-card.selected {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.08);
+  }
+  .ad-card .ad-info { flex: 1; min-width: 0; }
+  .ad-card .ad-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .ad-card .ad-meta {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .ad-card .ad-stats {
+    text-align: right;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+  .roas-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .roas-badge.high { background: rgba(34, 197, 94, 0.15); color: var(--green); }
+  .roas-badge.mid { background: rgba(245, 158, 11, 0.15); color: var(--orange); }
+  .roas-badge.emerging { background: rgba(99, 102, 241, 0.15); color: var(--accent); }
+  .spend-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .tier-label {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .tier-label.winner { background: rgba(34, 197, 94, 0.12); color: var(--green); }
+  .tier-label.emerging { background: rgba(245, 158, 11, 0.12); color: var(--orange); }
+  .tier-label.on-fence { background: rgba(99, 102, 241, 0.12); color: var(--accent); }
+  .selection-count {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+  .selection-count span { color: var(--accent); font-weight: 600; }
+
+  /* Guided Options (Net New Mode) */
+  .guided-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    margin-bottom: 6px;
+  }
+  .guided-option:hover { border-color: var(--accent-hover); }
+  .guided-option.selected {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.08);
+  }
+  .guided-option .option-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .guided-option .option-note {
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  /* Chip Selects (Copy Angles, Hook Types) */
+  .chip-select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .chip-select button {
+    padding: 6px 14px;
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .chip-select button:hover {
+    border-color: var(--accent-hover);
+    color: var(--text);
+  }
+  .chip-select button.selected {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--text);
+  }
+  .custom-input-reveal {
+    display: none;
+    margin-top: 8px;
+  }
+  .custom-input-reveal.visible {
+    display: block;
+  }
+
+  /* Batch Size Pills */
+  .batch-size-pills {
+    display: flex;
+    gap: 4px;
+  }
+  .batch-size-pills button {
+    width: 48px;
+    padding: 6px 0;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .batch-size-pills button:hover { border-color: var(--accent-hover); color: var(--text); }
+  .batch-size-pills button.active {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--accent);
+  }
+
+  /* Awareness Stepper */
+  .awareness-presets {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .awareness-presets button {
+    padding: 5px 12px;
+    border: 2px solid var(--border);
+    border-radius: 20px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .awareness-presets button:hover { border-color: var(--accent-hover); color: var(--text); }
+  .awareness-presets button.active {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--text);
+  }
+  .awareness-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .awareness-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+  }
+  .awareness-row .level-name {
+    font-size: 13px;
+    color: var(--text);
+    flex: 1;
+  }
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stepper button {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text-dim);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    line-height: 1;
+  }
+  .stepper button:hover { border-color: var(--accent-hover); color: var(--text); }
+  .stepper .count {
+    width: 24px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .awareness-total {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .awareness-total .total-count {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .awareness-total .total-count.over { color: var(--red); }
+  .awareness-total .total-count.match { color: var(--green); }
+
+  /* Filter Bar (Iteration Controls) */
+  .filter-bar {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .filter-bar .filter-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .filter-pills {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 3px;
+  }
+  .filter-pills button {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .filter-pills button:hover {
+    color: var(--text);
+  }
+  .filter-pills button.active {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* Tab navigation */
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 16px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* Workflow stepper */
+  .workflow-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 24px;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .workflow-step {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .step-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+  .step-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .step-arrow {
+    margin: 0 6px;
+    color: var(--border);
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 20px 16px; }
+    .radio-group { flex-direction: column; }
+    .checkbox-grid { grid-template-columns: 1fr; }
+    .ad-card { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .ad-card .ad-stats { text-align: left; margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>VAM Batch Generator</h1>
+    <p>Pitch creative concepts or generate production briefs — then paste the prompt into Claude.</p>
+    <div id="dataStatusBar" style="display: none; margin-top: 12px; padding: 6px 14px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); font-size: 12px; color: var(--text-dim); display: inline-flex; align-items: center; gap: 8px;">
+      <span id="dataStatusDot" style="width: 8px; height: 8px; border-radius: 50%; background: #6b7280;"></span>
+      <span id="dataStatusText">Data: Not configured</span>
+      <button id="dataRefreshBtn" onclick="refreshSheetData()" style="background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text-dim); cursor: pointer; padding: 2px 8px; font-size: 11px; margin-left: 4px;" title="Refresh data from Google Sheets">&#x21bb; Refresh</button>
+    </div>
+  </header>
+
+  <!-- Output Mode Toggle -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchMode('ideation')" id="tabBtnIdeation">Ideation</button>
+    <button class="tab-btn" onclick="switchMode('production')" id="tabBtnProduction">Production</button>
+  </div>
+
+  <!-- ===== IDEATION CONTENT ===== -->
+  <div id="ideationContent">
+
+  <!-- Workflow Steps -->
+  <div class="workflow-steps" id="workflowSteps">
+    <!-- Populated by switchMode() -->
+  </div>
+
+  <!-- Workflow Instructions -->
+  <div id="workflowInstructions" style="margin-bottom: 24px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; color: var(--text-dim); line-height: 1.6;">
+    <!-- Populated by switchMode() -->
+  </div>
+
+  <!-- Who -->
+  <div class="card">
+    <div class="card-title">Who</div>
+    <div class="field">
+      <label>Copywriter / Submitted By</label>
+      <input type="text" id="copywriter" list="copywriter-suggestions" value="Nate" />
+      <datalist id="copywriter-suggestions">
+        <option value="Nate">
+        <option value="Marcus">
+      </datalist>
+    </div>
+  </div>
+
+  <!-- Batch Type -->
+  <div class="card">
+    <div class="card-title">Batch Configuration</div>
+    <div class="field">
+      <label>Batch Type</label>
+      <div class="radio-group">
+        <label><input type="radio" name="batchType" value="static" checked /><span>Static</span></label>
+        <label><input type="radio" name="batchType" value="video" /><span>Video</span></label>
+        <label><input type="radio" name="batchType" value="copy" /><span>Body Copy</span></label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Batch Focus <span class="hint">What should this batch test or expand on?</span></label>
+      <input type="text" id="batchFocus" placeholder="e.g., Social proof Gmail variations" />
+      <div class="suggestions" id="focusSuggestions"></div>
+    </div>
+
+    <div class="field">
+      <label>Net New or Iteration</label>
+      <div class="radio-group">
+        <label><input type="radio" name="netNew" value="Net New" checked /><span>Net New</span></label>
+        <label><input type="radio" name="netNew" value="Iteration" /><span>Iteration</span></label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Batch Size <span class="hint">Number of creatives in this batch</span></label>
+      <div class="batch-size-pills" id="batchSizePills">
+        <button data-size="1" onclick="setBatchSize(this)">1</button>
+        <button data-size="2" onclick="setBatchSize(this)">2</button>
+        <button data-size="3" onclick="setBatchSize(this)">3</button>
+        <button data-size="4" onclick="setBatchSize(this)">4</button>
+        <button class="active" data-size="5" onclick="setBatchSize(this)">5</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Awareness Distribution <span class="hint">Must total batch size</span></label>
+      <div class="awareness-presets" id="awarenessPresets">
+        <button class="active" data-preset="default" onclick="setAwarenessPreset(this)">Default</button>
+        <button data-preset="warm" onclick="setAwarenessPreset(this)">Warm</button>
+        <button data-preset="cold" onclick="setAwarenessPreset(this)">Cold</button>
+        <button data-preset="balanced" onclick="setAwarenessPreset(this)">Balanced</button>
+        <button data-preset="custom" onclick="setAwarenessPreset(this)">Custom</button>
+      </div>
+      <div class="awareness-presets" style="margin-top: -6px;">
+        <button data-preset="allMostAware" onclick="setAwarenessPreset(this)">Most Aware</button>
+        <button data-preset="allProductAware" onclick="setAwarenessPreset(this)">Product Aware</button>
+        <button data-preset="allSolutionAware" onclick="setAwarenessPreset(this)">Solution Aware</button>
+        <button data-preset="allProblemAware" onclick="setAwarenessPreset(this)">Problem Aware</button>
+        <button data-preset="allUnaware" onclick="setAwarenessPreset(this)">Unaware</button>
+      </div>
+      <div class="awareness-rows" id="awarenessRows">
+        <div class="awareness-row" data-level="mostAware">
+          <span class="level-name">Most Aware</span>
+          <div class="stepper">
+            <button onclick="stepAwareness('mostAware', -1)">−</button>
+            <span class="count" id="count_mostAware">2</span>
+            <button onclick="stepAwareness('mostAware', 1)">+</button>
+          </div>
+        </div>
+        <div class="awareness-row" data-level="productAware">
+          <span class="level-name">Product Aware</span>
+          <div class="stepper">
+            <button onclick="stepAwareness('productAware', -1)">−</button>
+            <span class="count" id="count_productAware">1</span>
+            <button onclick="stepAwareness('productAware', 1)">+</button>
+          </div>
+        </div>
+        <div class="awareness-row" data-level="solutionAware">
+          <span class="level-name">Solution Aware</span>
+          <div class="stepper">
+            <button onclick="stepAwareness('solutionAware', -1)">−</button>
+            <span class="count" id="count_solutionAware">1</span>
+            <button onclick="stepAwareness('solutionAware', 1)">+</button>
+          </div>
+        </div>
+        <div class="awareness-row" data-level="problemAware">
+          <span class="level-name">Problem Aware</span>
+          <div class="stepper">
+            <button onclick="stepAwareness('problemAware', -1)">−</button>
+            <span class="count" id="count_problemAware">1</span>
+            <button onclick="stepAwareness('problemAware', 1)">+</button>
+          </div>
+        </div>
+        <div class="awareness-row" data-level="unaware">
+          <span class="level-name">Unaware</span>
+          <div class="stepper">
+            <button onclick="stepAwareness('unaware', -1)">−</button>
+            <span class="count" id="count_unaware">0</span>
+            <button onclick="stepAwareness('unaware', 1)">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="awareness-total">
+        <span>Total:</span>
+        <span class="total-count match" id="awarenessTotal">5</span>
+        <span>/ <span id="batchSizeLabel">5</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Static-specific -->
+  <div class="card conditional" id="staticFields">
+    <div class="card-title">Static Options</div>
+    <div class="field">
+      <label>Variation Type <span class="hint">All 5 creatives will use this — test one variable at a time</span></label>
+      <div class="radio-group" id="staticVariationType">
+        <label><input type="radio" name="staticVarType" value="Copy" checked /><span>Copy</span></label>
+        <label><input type="radio" name="staticVarType" value="Visual" /><span>Visual</span></label>
+      </div>
+    </div>
+    <div class="field" id="visualStyleField">
+      <p class="hint" style="margin: 0; color: var(--text-secondary); font-size: 13px;">Visual style will be chosen by AI based on performance data and held constant across all creatives in this batch. Use Creative Direction notes to guide style preference.</p>
+    </div>
+    <div class="field">
+      <label>Static Format</label>
+      <div class="radio-group" id="staticFormatType">
+        <label><input type="radio" name="staticFormat" value="Single Static" checked /><span>Single Static</span></label>
+        <label><input type="radio" name="staticFormat" value="Carousel" /><span>Carousel</span></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video-specific -->
+  <div class="card conditional" id="videoFields">
+    <div class="card-title">Video Options</div>
+    <div class="field">
+      <label>Variation Type <span class="hint">All 5 videos will use this — test one variable at a time</span></label>
+      <div class="radio-group" id="videoVariationType">
+        <label><input type="radio" name="videoVarType" value="Lead" checked /><span>Lead</span></label>
+        <label><input type="radio" name="videoVarType" value="Pattern Interrupt" /><span>Pattern Interrupt</span></label>
+        <label><input type="radio" name="videoVarType" value="Graphic Overlay" /><span>Graphic Overlay</span></label>
+        <label><input type="radio" name="videoVarType" value="Body" /><span>Body</span></label>
+        <label><input type="radio" name="videoVarType" value="CTA" /><span>CTA</span></label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Copy-specific -->
+  <div class="card conditional" id="copyFields">
+    <div class="card-title">Body Copy Options</div>
+    <div class="field">
+      <label>Variation Type <span class="hint">All 5 copies will use this — test one variable at a time</span></label>
+      <div class="radio-group" id="copyVariationType">
+        <label><input type="radio" name="copyVarType" value="Lead" checked /><span>Lead</span></label>
+        <label><input type="radio" name="copyVarType" value="Body" /><span>Body</span></label>
+        <label><input type="radio" name="copyVarType" value="CTA" /><span>CTA</span></label>
+        <label><input type="radio" name="copyVarType" value="Full" /><span>Full</span></label>
+      </div>
+    </div>
+    <div class="field">
+      <label>Copy Type</label>
+      <div class="radio-group" id="copyTypeSelector">
+        <label><input type="radio" name="copyType" value="Primary Text" checked /><span>Primary Text</span></label>
+        <label><input type="radio" name="copyType" value="Asset Set" /><span>Asset Set</span></label>
+        <label><input type="radio" name="copyType" value="Headline" /><span>Headline</span></label>
+      </div>
+    </div>
+    <div class="field">
+      <label>Hold Constant <span class="hint">Which component stays the same?</span></label>
+      <input type="text" id="holdConstant" placeholder='e.g., "Body: CB3_CostSavings" or "None — all new"' value="None — all new" />
+    </div>
+  </div>
+
+  <!-- Iteration Mode: Top Performer Selection -->
+  <div class="card conditional" id="iterationSection">
+    <div class="card-title">Select Ads to Iterate On</div>
+    <div class="filter-bar">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="filter-label">Metric</span>
+        <div class="filter-pills" id="metricToggle">
+          <button class="active" data-metric="roas" onclick="setMetricFilter(this)">ROAS</button>
+          <button data-metric="costPerConnected" onclick="setMetricFilter(this)">Cost / Connected</button>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span class="filter-label">Time Frame</span>
+        <div class="filter-pills" id="timeFrameToggle">
+          <button data-tf="7d" onclick="setTimeFrameFilter(this)">7d</button>
+          <button data-tf="14d" onclick="setTimeFrameFilter(this)">14d</button>
+          <button data-tf="30d" onclick="setTimeFrameFilter(this)">30d</button>
+          <button class="active" data-tf="all" onclick="setTimeFrameFilter(this)">All</button>
+        </div>
+      </div>
+    </div>
+    <div class="selection-count" id="selectionCount">Pick <span>1-3</span> proven winners to create variations of</div>
+    <div id="iterationCardList"></div>
+    <div class="field" style="margin-top: 16px;">
+      <label>Iteration Direction <span class="hint">What to change about these winners?</span></label>
+      <input type="text" id="iterationDirection" placeholder="e.g., Test with new visual style, adjust copy for colder audience..." />
+      <div class="suggestions" id="iterationSuggestions"></div>
+    </div>
+  </div>
+
+  <!-- Net New Mode: Guided Creative Direction -->
+  <div class="card conditional" id="netNewSection">
+    <div class="card-title">Creative Direction</div>
+    <div class="field" id="netNewVisualField">
+      <label>Visual Style Direction <span class="hint">Select styles to explore (not limited to winners)</span></label>
+      <div id="netNewVisualOptions"></div>
+      <div class="custom-input-reveal" id="customVisualField">
+        <input type="text" id="customVisualInput" placeholder="Describe the custom visual style you want to explore..." />
+      </div>
+    </div>
+    <div class="field">
+      <label>Copy Angle Direction <span class="hint">Which messaging territory to explore</span></label>
+      <div class="chip-select" id="netNewAngleChips"></div>
+      <div class="custom-input-reveal" id="customAngleField">
+        <input type="text" id="customAngleInput" placeholder="Describe the custom copy angle..." />
+      </div>
+    </div>
+    <div class="field">
+      <label>Hook Type Emphasis <span class="hint">Optional — Claude diversifies automatically</span></label>
+      <div id="netNewHookChips"></div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="card">
+    <div class="card-title">Additional Notes</div>
+    <div class="field">
+      <label>Any extra direction for this batch <span class="hint">Optional</span></label>
+      <textarea id="notes" placeholder="e.g., Try a fear-of-loss angle, avoid Apple Notes this time, test a new visual..."></textarea>
+    </div>
+  </div>
+
+  <!-- Saved Defaults (collapsible) -->
+  <div class="card">
+    <div class="defaults-toggle" onclick="toggleDefaults()">
+      <div>
+        <span class="card-title" style="margin-bottom: 0;">Saved Defaults</span>
+        <span class="saved-badge" id="savedBadge">Saved</span>
+      </div>
+      <span class="arrow" id="defaultsArrow">&#9660;</span>
+    </div>
+    <div class="defaults-body" id="defaultsBody">
+      <div class="field">
+        <label>Landing Page URL <span class="hint">Saved between sessions</span></label>
+        <input type="text" id="landingPage" value="https://go.valueaddedmoving.com/long-distance-a" />
+      </div>
+      <div class="field">
+        <label>Brand Assets Link <span class="hint">Saved between sessions</span></label>
+        <input type="text" id="brandAssets" value="https://drive.google.com/drive/u/0/folders/1SE4hFmXUkaPAULZRQvvkYwsc9kXJGPtJ" />
+      </div>
+      <div class="field">
+        <label>Avatar <span class="hint">Target audience — rarely changes</span></label>
+        <input type="text" id="avatar" value="Individuals and families planning a cross-country move, primarily 2-4+ bedroom households" />
+      </div>
+      <div class="field">
+        <label>Brand Voice (Static) <span class="hint">Tone for static ads</span></label>
+        <input type="text" id="brandVoiceStatic" value="Direct, confident, savings-focused — like a friend who found a deal and is sharing it" />
+      </div>
+      <div class="field">
+        <label>Brand Voice (Video) <span class="hint">Tone for video ads</span></label>
+        <input type="text" id="brandVoiceVideo" value="Authentic, relieved, genuine surprise — like telling a friend about a great experience" />
+      </div>
+      <div class="field">
+        <label>Ratio Format(s) <span class="hint">Select all that apply</span></label>
+        <div class="chip-select" id="ratioFormatChips">
+          <button type="button" class="selected" data-value="1:1" onclick="toggleRatioChip(this)">1:1</button>
+          <button type="button" data-value="4:5" onclick="toggleRatioChip(this)">4:5</button>
+          <button type="button" class="selected" data-value="9:16" onclick="toggleRatioChip(this)">9:16</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Ad Platform <span class="hint">Default platform for ad briefs</span></label>
+        <select id="adPlatform">
+          <option value="Meta" selected>Meta</option>
+          <option value="All">All</option>
+          <option value="Google">Google</option>
+          <option value="N/A">N/A</option>
+        </select>
+      </div>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+        <button class="reset-btn" onclick="resetDefaults()">Reset to Defaults</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Generate -->
+  <button class="generate-btn" id="mainGenerateBtn" onclick="handleGenerate()">Generate Pitch Prompt</button>
+
+  <!-- Output -->
+  <div class="output-section" id="outputSection">
+    <div class="card" style="margin-top: 24px;">
+      <div class="output-header">
+        <div class="card-title" style="margin-bottom: 0;">Generated Prompt</div>
+        <span class="char-count" id="charCount"></span>
+      </div>
+      <textarea class="output-area" id="outputArea" readonly></textarea>
+      <button class="copy-btn" id="copyBtn" onclick="copyToClipboard()">
+        Copy to Clipboard
+      </button>
+      <div id="nextStepHint" style="display: none; margin-top: 12px; padding: 12px 16px; border-radius: 8px; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); font-size: 13px; color: var(--text-dim); line-height: 1.5;">
+        <!-- Populated after copy -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SHARED: Data Source Settings ===== -->
+  <div class="card" style="margin-top: 32px;">
+    <div class="defaults-toggle" onclick="toggleDataSource()">
+      <div>
+        <span class="card-title" style="margin-bottom: 0;">Data Source</span>
+        <span class="saved-badge" id="dataSourceBadge" style="background: #374151; color: #9ca3af;">Not configured</span>
+      </div>
+      <span class="arrow" id="dataSourceArrow">&#9660;</span>
+    </div>
+    <div class="defaults-body" id="dataSourceBody" style="display: none;">
+      <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.5;">
+        Connect your Google Sheets to pull live performance data into the prompt. The dashboard will automatically use your latest KPIs, winning hooks, and losing patterns.
+      </div>
+      <div class="field">
+        <label>Creative & Copy Tracking Sheet ID <span class="hint">The long ID from the sheet URL</span></label>
+        <input type="text" id="sheetCreativeId" placeholder="e.g. 1BxiM0g9hZzF3x..." style="font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;" />
+      </div>
+      <div class="field">
+        <label>Meta Marketing Dashboard Sheet ID <span class="hint">The long ID from the sheet URL</span></label>
+        <input type="text" id="sheetDashboardId" placeholder="e.g. 1AbCdEfG2hIjK..." style="font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;" />
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center; margin-top: 8px;">
+        <button onclick="saveAndFetchSheets()" style="padding: 8px 20px; border-radius: 6px; border: none; background: var(--accent); color: white; cursor: pointer; font-size: 13px; font-weight: 600;">Save &amp; Fetch</button>
+        <span id="sheetSaveMsg" style="font-size: 12px; color: var(--green); display: none;"></span>
+      </div>
+      <details style="margin-top: 16px;">
+        <summary style="cursor: pointer; font-size: 12px; color: var(--accent); font-weight: 500;">How to find your Sheet ID &amp; publish to web</summary>
+        <div style="font-size: 12px; color: var(--text-dim); margin-top: 8px; line-height: 1.6; padding-left: 8px; border-left: 2px solid var(--border);">
+          <strong>1. Find the Sheet ID:</strong><br>
+          Open your Google Sheet. The URL looks like:<br>
+          <code style="font-size: 11px; background: var(--surface); padding: 2px 6px; border-radius: 4px;">https://docs.google.com/spreadsheets/d/<strong style="color: var(--accent);">THIS_IS_THE_ID</strong>/edit</code><br><br>
+          <strong>2. Publish each sheet to the web:</strong><br>
+          File &rarr; Share &rarr; Publish to web &rarr; Select each tab &rarr; CSV &rarr; Publish<br><br>
+          <strong>Required tabs:</strong><br>
+          &bull; Creative Tracking: "Static Ad Performance", "Video Ad Performance", "Copy Performance"<br>
+          &bull; Meta Dashboard: "Dashboard"
+        </div>
+      </details>
+    </div>
+  </div>
+
+  </div><!-- END #ideationContent -->
+
+  <!-- ===== PRODUCTION CONTENT ===== -->
+  <div id="productionContent" style="display: none;">
+
+  <!-- Production workflow steps -->
+  <div class="workflow-steps" style="margin-top: 16px;">
+    <div class="workflow-step"><span class="step-num">1</span><span class="step-label">Paste briefs</span></div>
+    <span class="step-arrow">&#x2192;</span>
+    <div class="workflow-step"><span class="step-num">2</span><span class="step-label">Export</span></div>
+  </div>
+
+  <div class="card" style="margin-top: 16px; padding: 16px 20px; font-size: 13px; color: var(--text-dim); line-height: 1.6;">
+    <strong style="color: var(--text);">How Production mode works:</strong><br>
+    After Claude writes your briefs (via the Ideation chat or a separate Claude conversation), paste the entire output below to generate your .docx or Google Doc.
+  </div>
+
+  <!-- ===== DOC GENERATOR ===== -->
+  <div id="docGenSection" style="margin-top: 16px;">
+    <div class="card" style="border-color: var(--green); border-width: 1px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <div class="card-title" style="margin-bottom: 0;">Doc Generator</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span id="gdocStatus" style="font-size: 11px; color: var(--green); display: none;">Connected</span>
+          <a href="#" onclick="toggleGDocSettings(); return false;" style="color: var(--accent); text-decoration: none; font-size: 12px; font-weight: 500;">Google Doc Setup</a>
+        </div>
+      </div>
+      <div style="font-size: 13px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.5;">
+        After Claude writes your briefs, copy the <strong style="color: var(--text);">entire output</strong> (the part with <code style="background: var(--surface2); padding: 1px 5px; border-radius: 3px; font-size: 11px;">=== CREATIVE 1 ===</code>, <code style="background: var(--surface2); padding: 1px 5px; border-radius: 3px; font-size: 11px;">=== CREATIVE 2 ===</code>, etc.) and paste it below.
+      </div>
+
+      <!-- Google Doc Settings (hidden by default) -->
+      <div id="gdocSettingsPanel" style="display: none; margin-bottom: 16px; padding: 12px 16px; border-radius: 8px; background: var(--surface2); border: 1px solid var(--border);">
+        <div style="font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px;">Google Docs Integration</div>
+        <div style="font-size: 12px; color: var(--text-dim); margin-bottom: 8px;">
+          Enter your deployed Apps Script URL. See <code style="background: var(--surface); padding: 1px 5px; border-radius: 3px;">GOOGLE_DOCS_SETUP.md</code> for the one-time setup guide.
+        </div>
+        <input type="text" id="appsScriptUrl" placeholder="https://script.google.com/macros/s/your-deployment-id/exec" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace; box-sizing: border-box; background: var(--surface); color: var(--text);" />
+        <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center;">
+          <button onclick="saveGDocSettings()" style="padding: 6px 16px; border-radius: 6px; border: none; background: #4285f4; color: white; cursor: pointer; font-size: 12px; font-weight: 500;">Save URL</button>
+          <span id="gdocSaveMsg" style="font-size: 11px; color: var(--green); display: none;">Saved!</span>
+        </div>
+      </div>
+
+      <textarea id="claudeOutputArea" placeholder="Paste Claude's brief output here...
+
+It should start with something like:
+BATCH: VAM Static Batch — ...
+and contain === CREATIVE 1 ===, === CREATIVE 2 ===, etc." style="width: 100%; min-height: 160px; padding: 14px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; resize: vertical; box-sizing: border-box; background: var(--surface2); color: var(--text);"></textarea>
+
+      <div id="previewArea" style="display: none; margin-top: 12px; padding: 12px 16px; border-radius: 8px; background: rgba(34, 197, 94, 0.08); border: 1px solid rgba(34, 197, 94, 0.2); font-size: 13px; color: var(--text);"></div>
+
+      <div id="docErrorArea" style="display: none; margin-top: 12px; padding: 12px 16px; border-radius: 8px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); color: var(--red); font-size: 13px;"></div>
+
+      <div style="display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;">
+        <button onclick="previewDoc()" style="padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; font-weight: 500; font-size: 13px; color: var(--text-dim); transition: border-color 0.2s;">
+          Preview
+        </button>
+        <button id="generateDocBtn" onclick="generateDoc()" style="padding: 10px 20px; border-radius: 8px; border: none; background: var(--green); cursor: pointer; font-weight: 600; font-size: 13px; color: white;">
+          Download .docx
+        </button>
+        <button id="copyGDocsBtn" onclick="copyForGoogleDocs()" style="padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; font-weight: 500; font-size: 13px; color: var(--text-dim);">
+          Copy for Google Docs
+        </button>
+        <button id="generateGDocBtn" onclick="generateGoogleDoc()" style="padding: 10px 20px; border-radius: 8px; border: none; background: #4285f4; cursor: pointer; font-weight: 600; font-size: 13px; color: white;">
+          Create Google Doc
+        </button>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- END #productionContent -->
+
+</div>
+
+<script>
+
+// === DOC GENERATION FUNCTIONS ===
+async function previewDoc() {
+  const text = document.getElementById('claudeOutputArea').value.trim();
+  const previewArea = document.getElementById('previewArea');
+  const errorArea = document.getElementById('docErrorArea');
+  errorArea.style.display = 'none';
+
+  if (!text || text.length < 50) {
+    errorArea.textContent = 'Please paste Claude\'s full text output first.';
+    errorArea.style.display = 'block';
+    return;
+  }
+
+  try {
+    const resp = await fetch('/api/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const data = await resp.json();
+
+    if (data.error) {
+      errorArea.textContent = data.error;
+      errorArea.style.display = 'block';
+      previewArea.style.display = 'none';
+      return;
+    }
+
+    let html = `<strong>Detected:</strong> ${data.batch_type.toUpperCase()} batch &nbsp;|&nbsp; `;
+    html += `<strong>Overview:</strong> ${data.overview_fields} fields &nbsp;|&nbsp; `;
+    html += `<strong>Creatives:</strong> ${data.creatives_count} found<br>`;
+    if (data.creatives && data.creatives.length > 0) {
+      html += '<div style="margin-top: 8px; font-size: 12px; color: #374151;">';
+      data.creatives.forEach(c => {
+        html += `&bull; Creative ${c.number}: <em>${c.file_name}</em> (${c.fields} fields)<br>`;
+      });
+      html += '</div>';
+    }
+    previewArea.innerHTML = html;
+    previewArea.style.display = 'block';
+  } catch (e) {
+    errorArea.textContent = 'Server not reachable. Make sure you started the server with: python3 server.py';
+    errorArea.style.display = 'block';
+  }
+}
+
+async function generateDoc() {
+  const text = document.getElementById('claudeOutputArea').value.trim();
+  const errorArea = document.getElementById('docErrorArea');
+  const btn = document.getElementById('generateDocBtn');
+  errorArea.style.display = 'none';
+
+  if (!text || text.length < 50) {
+    errorArea.textContent = 'Please paste Claude\'s full text output first.';
+    errorArea.style.display = 'block';
+    return;
+  }
+
+  btn.textContent = 'Generating...';
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+
+  try {
+    const resp = await fetch('/api/generate-doc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.error || 'Generation failed');
+    }
+
+    // Download the file
+    const blob = await resp.blob();
+    const filename = resp.headers.get('Content-Disposition')?.match(/filename="?(.+?)"?$/)?.[1] || 'batch.docx';
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    btn.textContent = 'Downloaded!';
+    btn.style.background = '#059669';
+    setTimeout(() => {
+      btn.textContent = 'Download .docx';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.background = 'white';
+    }, 3000);
+
+  } catch (e) {
+    errorArea.textContent = e.message;
+    errorArea.style.display = 'block';
+    btn.textContent = 'Download .docx';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+// === COPY FOR GOOGLE DOCS ===
+
+async function copyForGoogleDocs() {
+  const text = document.getElementById('claudeOutputArea').value.trim();
+  const errorArea = document.getElementById('docErrorArea');
+  const btn = document.getElementById('copyGDocsBtn');
+  errorArea.style.display = 'none';
+
+  if (!text || text.length < 50) {
+    errorArea.textContent = 'Please paste Claude\'s full text output first.';
+    errorArea.style.display = 'block';
+    return;
+  }
+
+  btn.textContent = 'Formatting...';
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+
+  try {
+    const resp = await fetch('/api/format-for-gdocs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const data = await resp.json();
+
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    // Try clipboard with a timeout (clipboard.write can hang without user gesture)
+    let clipboardOk = false;
+    try {
+      const htmlBlob = new Blob([data.html], { type: 'text/html' });
+      const textBlob = new Blob([text], { type: 'text/plain' });
+      const item = new ClipboardItem({
+        'text/html': htmlBlob,
+        'text/plain': textBlob
+      });
+      await Promise.race([
+        navigator.clipboard.write([item]),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Clipboard timeout')), 3000))
+      ]);
+      clipboardOk = true;
+    } catch (clipErr) {
+      clipboardOk = false;
+    }
+
+    if (clipboardOk) {
+      btn.textContent = 'Copied! ✓';
+      btn.style.background = '#059669';
+      setTimeout(() => {
+        btn.textContent = 'Copy for Google Docs';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.background = '#10b981';
+      }, 2000);
+    } else {
+      // Fallback: open formatted HTML in a new tab for manual copy
+      const win = window.open('', '_blank');
+      win.document.write(`
+        <html><head><title>VAM Brief — Copy this into Google Docs</title>
+        <style>body{font-family:Arial,sans-serif;max-width:800px;margin:20px auto;padding:20px;}
+        .tip{background:#fff3cd;border:1px solid #ffc107;padding:10px 14px;border-radius:6px;margin-bottom:20px;font-size:13px;}</style>
+        </head><body>
+        <div class="tip"><b>Tip:</b> Press Cmd+A (select all) then Cmd+C (copy), then paste into Google Docs.</div>
+        ${data.html}
+        </body></html>`);
+      win.document.close();
+      btn.textContent = 'Opened in tab ↗';
+      btn.style.background = '#059669';
+      setTimeout(() => {
+        btn.textContent = 'Copy for Google Docs';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.background = '#10b981';
+      }, 3000);
+    }
+
+  } catch (e) {
+    errorArea.textContent = e.message;
+    errorArea.style.display = 'block';
+    btn.textContent = 'Copy for Google Docs';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+// === GOOGLE DOC GENERATION ===
+
+function toggleGDocSettings() {
+  const panel = document.getElementById('gdocSettingsPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  // Load saved URL into the input
+  const saved = localStorage.getItem('vamAppsScriptUrl');
+  if (saved) {
+    document.getElementById('appsScriptUrl').value = saved;
+  }
+}
+
+function saveGDocSettings() {
+  const url = document.getElementById('appsScriptUrl').value.trim();
+  if (url) {
+    localStorage.setItem('vamAppsScriptUrl', url);
+    document.getElementById('gdocStatus').style.display = 'inline';
+    document.getElementById('gdocSaveMsg').style.display = 'inline';
+    setTimeout(() => {
+      document.getElementById('gdocSettingsPanel').style.display = 'none';
+      document.getElementById('gdocSaveMsg').style.display = 'none';
+    }, 1500);
+  }
+}
+
+async function generateGoogleDoc() {
+  const text = document.getElementById('claudeOutputArea').value.trim();
+  const errorArea = document.getElementById('docErrorArea');
+  const btn = document.getElementById('generateGDocBtn');
+  errorArea.style.display = 'none';
+
+  if (!text || text.length < 50) {
+    errorArea.textContent = 'Please paste Claude\'s full text output first.';
+    errorArea.style.display = 'block';
+    return;
+  }
+
+  const scriptUrl = localStorage.getItem('vamAppsScriptUrl');
+  if (!scriptUrl) {
+    toggleGDocSettings();
+    errorArea.textContent = 'Please configure your Apps Script URL first (click "Google Doc Setup" above).';
+    errorArea.style.display = 'block';
+    return;
+  }
+
+  btn.textContent = 'Creating...';
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+
+  try {
+    const resp = await fetch('/api/create-google-doc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, script_url: scriptUrl })
+    });
+
+    const result = await resp.json();
+
+    if (!resp.ok || result.error) {
+      throw new Error(result.error || 'Google Doc creation failed');
+    }
+
+    if (result.url) {
+      // Show success with link
+      const previewArea = document.getElementById('previewArea');
+      previewArea.innerHTML = '<strong style="color: #059669;">Google Doc created!</strong> ' +
+        '<a href="' + result.url + '" target="_blank" style="color: #4285f4; font-weight: 600;">' +
+        'Open in Google Docs &rarr;</a>';
+      previewArea.style.display = 'block';
+      previewArea.style.background = '#eff6ff';
+      previewArea.style.borderColor = '#bfdbfe';
+
+      // Also open in new tab
+      window.open(result.url, '_blank');
+    }
+
+    btn.textContent = 'Created!';
+    btn.style.background = '#059669';
+    setTimeout(() => {
+      btn.textContent = 'Generate Google Doc';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.background = '#4285f4';
+    }, 3000);
+
+  } catch (e) {
+    errorArea.textContent = e.message;
+    errorArea.style.display = 'block';
+    btn.textContent = 'Generate Google Doc';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+// Load Google Doc connection status on page load
+(function initGDocStatus() {
+  const saved = localStorage.getItem('vamAppsScriptUrl');
+  if (saved) {
+    const status = document.getElementById('gdocStatus');
+    if (status) status.style.display = 'inline';
+  }
+})();
+
+// === MASTER SYSTEM PROMPT (embedded) ===
+let MASTER_PROMPT = `# VAM Creative System \u2014 Master System Prompt
+
+You are a Meta ads creative strategist for VAM, a long-distance moving company. You work within the BAD Marketing agency's creative workflow. Your job is to generate data-driven creative briefs that match the agency's exact template format.
+
+## BRAND CONTEXT
+
+**Company:** VAM (Value Added Moving)
+**Service:** Long-distance / cross-country moving (interstate moves)
+**Target Customer:** Individuals and families moving across state lines, primarily 2-4+ bedroom households
+**Geographic Scope:** Nationwide (US)
+**Primary Platform:** Meta (Facebook + Instagram)
+**Key Differentiators:** Competitive pricing (starting at $1,597), licensed & insured, nationwide coverage, transparent quoting process
+**Landing Page:** Leads to a free quote form
+**Conversion Flow:** Ad \u2192 Landing Page \u2192 Free Quote Form (Lead) \u2192 Phone Call \u2192 Booking \u2192 Move
+
+## CURRENT PERFORMANCE (as of March 2026)
+
+| Metric | Current | Target | Gap |
+|--------|---------|--------|-----|
+| ROAS | 1.58x | 2.0x | -21% |
+| Cost per Connected Call | $380.65 | $250 | +52% |
+| CAC | $1,058.50 | $750 | +41% |
+| CPL | $71.59 | \u2014 | \u2014 |
+| Close Rate (Connected) | 35.96% | \u2014 | \u2014 |
+| Total Spend | $550,419 | \u2014 | \u2014 |
+
+**Strategic Priority:** Improve ROAS from 1.58x to 2.0x by expanding into colder audiences through broader awareness-level hooks while maintaining strong warm-audience performance.
+
+## PROVEN WINNING ELEMENTS
+
+### Top Copy Angles (ranked by proven performance)
+1. **Social Proof Shock** \u2014 "Check This", "Dodged 4k Bill", "Almost Paid Double", "Almost Paid 3k" \u2192 ROAS 1.15-1.75x
+2. **Price Anchoring** \u2014 "Starting at $1,597", "City Prices" \u2192 ROAS 1.32-2.01x
+3. **Cost Exposure** \u2014 "How Movers Sneak Extra Fees", "Didn't Realized", "I Thought It Cost More" \u2192 Emerging winners
+4. **Savings Quantification** \u2014 "Save Up To 50%" \u2192 ROAS 1.08x at high volume
+5. **Emotional Relief** \u2014 "Stress Free Long Distance", "Moving Checklist" \u2192 ROAS 1.09-1.35x
+6. **Humor/Relatability** \u2014 "Flying Funny" \u2192 ROAS 1.10x
+
+### Top Visual Styles
+**Static (use these by default):**
+- Gmail \u2014 Mock email notification (5 winners, lowest CPM $31-43). Creative team produces dark + light variations.
+- TwitterStyle \u2014 Social media post mockup (1.75x ROAS \u2014 highest single)
+- TruckBack \u2014 Rear of VAM truck photo (3 winners, strong with price copy)
+- TruckFreeway \u2014 Highway truck shot (re-emerged, 2.01x with CityPricesV4)
+- AppleNote \u2014 Apple Notes screenshot (emerging with cost exposure). Creative team produces dark + light variations.
+
+**Note:** Light/dark variants are NOT separate styles. Use the base name (e.g., "Gmail" not "Gmail Dark"). The creative team makes both variations.
+
+**Video (use these by default):**
+- UGC_AsianWoman (VV10/VV11/VV12) \u2014 8-11% CTR, 3-4x above average
+- UGC_WhiteWoman (VV7/VV8/VV9) \u2014 8-11% CTR, good engagement
+- Done For You Problem-Solution format \u2014 New, showing 31.42x RPS on early data
+
+### Top Copy Hook + Body Combos
+- CHK2_StartingAt1597 + CB1_Savings \u2014 Only true Winner ($34K spend, 1.32x ROAS)
+- CHK2_StartingAt1597 + CB3_CostSavings \u2014 Highest volume ($115K spend, 1.18x ROAS)
+- CHK3_StressFreeLongDistance + CB2_StressFree \u2014 Solid volume ($54K, 1.09x)
+- CHK15_FullServiceMoves + CB8_BeforeYouBook \u2014 Emerging ($2.5K, 1.28x)
+
+## CONFIRMED LOSING PATTERNS \u2014 DO NOT USE
+
+**Visual formats that always fail:**
+- StickyNote (SV29), EducationalLayout (SV30), HoldingSign (SV19/20/21), TruckCalendar (SV22), UsvsThem (SV12), EmptySpace (SV27), TruckMap (SV28), Carousel format, Copy-only single image, ChatGPT conversation (VV2), Animated truck variants (VV4/VV5/VV6), Polished IG testimonial (VV13)
+
+**Copy angles that always fail:**
+- "Licensed & Insured" as headline, "Arrived Flawless", "From Scheduling to Delivery", "Gently and Correctly", "Relax Leave It To Us", "Coast to Coast" alone, "Choose Date Later", "Move Timeline", any calendar/scheduling messaging
+
+**Targeting approaches that fail:**
+- NY-specific copy, city-to-city route copy (NYtoLA, LAtoAustin, etc.), city-specific lifestyle visuals, any geographic targeting in the ad creative
+
+**Concepts that always fail:**
+- Holiday/seasonal theming (kills even winning angles), educational/infographic formats, branded/polished production, comparison charts
+
+## FRAMEWORKS
+
+### Kaleidoscope Method (from Goated Ads.pdf)
+**Hook \u00d7 Meat \u00d7 CTA = Ad**
+- Generate hooks independently from meats and CTAs
+- 80% of prep time on hooks, 20% on meat, ~0% on CTAs
+- One hook can pair with multiple meats; one meat with multiple hooks
+
+### 70-20-10 Hook Rule (from Hooks.pdf)
+- **70%** = Variations of proven VAM winners (listed above)
+- **20%** = Hooks adapted from adjacent service industries (home services, insurance, car dealers, travel deals)
+- **10%** = Completely new experimental hooks
+
+### 5 Awareness Levels for Hook Distribution
+Target this distribution across each batch:
+1. **Most Aware (30%)** \u2014 Offer-driven: "Starting at $1,597 \u2014 get your free quote"
+2. **Product Aware (25%)** \u2014 Proof-driven: "See why 12,000 families trusted VAM"
+3. **Solution Aware (20%)** \u2014 Promise-driven: "Move your entire home in 14 days"
+4. **Problem Aware (15%)** \u2014 Pain-driven: "Tired of getting ghosted after a quote?"
+5. **Unaware (10%)** \u2014 Curiosity-driven: "The hidden fee in 90% of moving quotes"
+
+### 8 Verbal Hook Types (rotate across batch for diversity)
+Labels, Questions (yes/open), Conditionals, Commands, Statements, Lists/Steps, Narratives, Exclamations
+
+### 5 Ad Meat Types
+1. **Testimonial** \u2014 UGC, direct-to-camera, customer stories (BEST for VAM video)
+2. **Faceless** \u2014 Screenshots, text overlays, mockups (BEST for VAM static)
+3. **Demonstration** \u2014 Before/after, crew working, truck loading
+4. **Story** \u2014 Customer journey, mini-documentary
+5. **Education** \u2014 DO NOT USE for VAM (confirmed loser)
+
+### Lead Types (BAD Marketing dropdown values \u2014 use ONLY these)
+- **Offer** \u2014 Direct offer/deal (best for Most Aware)
+- **Promise** \u2014 Outcome/benefit promise (best for Product Aware, Solution Aware)
+- **Problem-Solution** \u2014 Present problem, offer solution (best for Solution Aware, Problem Aware)
+- **Secret** \u2014 Hidden/insider information angle (best for Problem Aware, Unaware)
+- **Proclamation** \u2014 Bold statement/declaration (best for Most Aware, Product Aware)
+- **Story** \u2014 Narrative/testimonial-driven (best for Product Aware, Unaware)
+
+**Awareness Level \u2192 Lead Type mapping:**
+| Awareness Level | Primary Lead Type | Secondary Lead Type |
+|---|---|---|
+| Most Aware | Offer | Proclamation |
+| Product Aware | Story | Promise |
+| Solution Aware | Promise | Problem-Solution |
+| Problem Aware | Problem-Solution | Secret |
+| Unaware | Secret | Story |
+
+### Variation Types (differ by brief type \u2014 use ONLY these)
+**Static briefs:** Copy | Visual
+**Video briefs:** Lead | Pattern Interrupt | Body | CTA
+**Body copy briefs:** Lead | Body | CTA | Full
+
+**CRITICAL RULE: One variation type per batch.** All 5 creatives in a batch MUST use the SAME variation type. This isolates the variable being tested so we can measure what\u2019s actually driving results. The batch parameters will specify which variation type to use.
+
+## NAMING CONVENTIONS (Creative Tracker Format)
+
+The creative name is a formula: \`[Angle Name] - [variable based on Variation Type]\`. The sequential number (#) and CID/CPID/VID hash are auto-generated by the tracker \u2014 briefs only provide the base name.
+
+**Static naming depends on Variation Type:**
+- Copy variation: \`[Angle Name] - [Lead Type] Lead\` \u2192 e.g., \`Quiet Overwhelm - Offer Lead\`
+- Visual variation: \`[Angle Name] - [Visual Style]\` \u2192 e.g., \`VAM Crew Members - Organic Looking\`
+- Tracker auto-appends: \u2192 \`Quiet Overwhelm - Offer Lead 1 - CID[auto]\`
+
+**Video naming:** \`[Angle Name] - [Lead Type] [Variation Type]\`
+- Lead: \`Done For You - Problem-Solution Lead\`
+- Body: \`Real Trucks Real Prices - Problem-Solution Body\`
+- Pattern Interrupt / Graphic Overlay / CTA follow the same pattern
+
+**Copy naming (same pattern as video):**
+- Lead/Body/CTA: \`[Angle Name] - [Lead Type] [Variation Type]\` \u2192 e.g., \`Heart3Heart - Promise Lead\`
+- Full: \`[Angle Name] - [Lead Type]\` \u2192 e.g., \`Heart3Heart - Promise\`
+- Special: When Copy Type = Asset Set \u2192 \`[Angle Name] - Asset Set\`
+
+**KEEP NAMES SHORT** \u2014 Angle Name, Idea Name, Style Name should all be 2-4 words max, natural casing with spaces.
+- Good: Quiet Overwhelm, 3BR Owner Stories, No Ghosting, Cost Savings UGC
+- Bad: Almost Paid Double For My Move, Check This Out Before You Book
+
+## BAD MARKETING WORKFLOW
+
+- Creative requests submitted via ClickUp form in batches
+- One form per batch (5 creatives per batch)
+- Copy brief completed BEFORE creative request
+- Static assigned to Lead Designer, video assigned to Lead Video Editor
+- Status flow: To-Do \u2192 Assigned \u2192 In Progress \u2192 Revise \u2192 Team Review \u2192 Final Review \u2192 Upload to Drive \u2192 Complete
+
+## OUTPUT FORMAT
+
+When generating briefs, match the exact BAD Marketing template structure. **All dropdown fields must use ONLY the values listed below.**
+
+### Dropdown Field Reference (from BAD Marketing .docx templates)
+
+| Field | Allowed Values |
+|-------|---------------|
+| AI Allowed | Yes, AI Is Allowed \u00b7 NO NO NO NO |
+| Net New/Iteration | Net New \u00b7 Iteration |
+| Awareness Level | Most Aware \u00b7 Product Aware \u00b7 Solution Aware \u00b7 Problem Aware \u00b7 Unaware |
+| Lead Type | Offer \u00b7 Promise \u00b7 Problem-Solution \u00b7 Secret \u00b7 Proclamation \u00b7 Story |
+| Status | Ready For Internal \u00b7 Changes Required \u00b7 Needs Client Approval \u00b7 Approved |
+| Ad Platform (Static/Video) | All \u00b7 Meta \u00b7 Google \u00b7 N/A |
+| Ad Platform (Body Copy) | Meta \u00b7 YouTube \u00b7 PMAX/Search/Display \u00b7 All |
+| Variation Type (Static) | Copy \u00b7 Visual |
+| Variation Type (Video) | Lead \u00b7 Pattern Interrupt \u00b7 Graphic Overlay \u00b7 Body \u00b7 CTA |
+| Variation Type (Body Copy) | Lead \u00b7 Body \u00b7 CTA \u00b7 Full |
+| Video Type (Video only) | Intro Video \u00b7 VSL \u00b7 Webinar \u00b7 Ad Video \u00b7 Other Video |
+| Static Format (Static only) | Single Static \u00b7 Carousel |
+| Copy Type (Body Copy only) | Primary Text \u00b7 Asset Set \u00b7 Headline |
+
+### Brief Structures
+
+**For Static Briefs:** OVERVIEW section with batch-level fields + Static Format, then 5 numbered creatives each with: Creative Name, Notes, Design Notes, Variation Type (Copy/Visual), Awareness Level, Lead Type, Status, Copy
+
+**For Video Briefs:** OVERVIEW section with Video Type field, then 5 numbered videos each with: Creative Name, Notes, Editing Notes, Variation Type (Lead/Pattern Interrupt/Graphic Overlay/Body/CTA), Awareness Level, Lead Type, Status, Lead Script, Body Script
+
+**For Body Copy Briefs:** OVERVIEW section, then 5 numbered items each with: Name, Notes, Variation Type (Lead/Body/CTA/Full), Awareness Level, Lead Type, Status, Headline, Body Copy`;
+
+// === PERFORMANCE REPORT INSTRUCTION ===
+const PERFORMANCE_REPORT = `---
+
+## STEP 1: PERFORMANCE REPORT
+
+Before generating the batch, analyze the performance data from the context above. Present a brief report:
+
+1. **KPI Snapshot** \u2014 Current ROAS, cost per connected, CAC vs targets
+2. **Top 3-5 Performers** \u2014 Best static/video/copy ads right now
+3. **What's Working** \u2014 Which angles, visuals, and awareness levels are trending
+4. **What's Failing** \u2014 Any ads to kill or new losing patterns
+5. **3 Recommended Batch Directions** \u2014 Options A, B, C based on the data
+
+Then say: "Based on this data, I'm generating your batch with the focus specified below. Let me know if you'd like to adjust the direction first."
+
+---`;
+
+// === BATCH GENERATOR TEMPLATES ===
+const STATIC_GENERATOR = `## CRITICAL: OUTPUT PLAIN TEXT ONLY — DO NOT USE ANY TOOLS OR SKILLS
+Do not invoke the docx skill, pdf skill, xlsx skill, or any other skill. Do not create files. Do not run code. Output the briefs as plain text directly in this chat. The user will copy your text into a separate Doc Generator tool.
+
+**Model requirement:** This prompt is designed for **Claude Opus 4.6**.
+
+## GENERATE STATIC BATCH
+
+Generate a batch of {{BATCH_SIZE}} static ad creatives for VAM.
+
+### Batch Parameters
+- **Batch Focus:** {{BATCH_FOCUS}}
+- **Variation Type (all 5 must match):** {{VARIATION_TYPE}}
+- **Awareness Distribution:** {{AWARENESS}}
+- **Visual Style:** {{VISUALS}}
+- **Net New/Iteration:** {{NET_NEW}}
+- **Landing Page URL:** {{LANDING_PAGE}}
+- **Brand Assets Link:** {{BRAND_ASSETS}}
+- **Copywriter:** {{COPYWRITER}}
+{{ADDITIONAL_NOTES}}
+
+### Generation Rules
+
+1. **VARIABLE ISOLATION (non-negotiable):**
+   - **Variation Type for this batch: {{VARIATION_TYPE}}** — ALL creatives must use this same variation type.
+   - **{{VISUALS}}** — ALL creatives must use this EXACT SAME visual style. Only the {{VARIATION_TYPE}} element changes across creatives. Design notes should be identical across all creatives.
+   - If you change two variables at once, the batch is useless for optimization.
+
+2. **Apply 70-20-10 ONLY to the tested variable (the held-constant elements do NOT change):**
+   - Creatives 1-3 (70%): Variations of proven winners from the Winning Hooks Library
+   - Creative 4 (20%): Adapted from another service industry (home services, insurance, car dealers, travel)
+   - Creative 5 (10%): Experimental new approach
+   - 70-20-10 applies to the TESTED variable only. All constant elements are identical across all creatives.
+
+3. **Each creative must use a DIFFERENT verbal hook type:** Labels, Questions, Conditionals, Commands, Statements, Lists/Steps, Narratives, Exclamations
+
+4. **DO NOT use any element from the Confirmed Losing Patterns** (no StickyNote, EducationalLayout, HoldingSign, holiday themes, geographic targeting, carousel, etc.)
+
+5. **Assign proper naming using Creative Tracker formula (depends on Variation Type):**
+   - Copy variation: \`[Angle Name] - [Lead Type] Lead\` \u2014 e.g., \`Quiet Overwhelm - Offer Lead\`
+   - Visual variation: \`[Angle Name] - [Visual Style]\` \u2014 e.g., \`VAM Crew Members - Organic Looking\`
+   **Keep Angle Names SHORT** (2-4 words). The number (#) and CID are auto-generated by the tracker.
+
+6. **Dropdown constraints \u2014 use ONLY these values:**
+   - Variation Type: **{{VARIATION_TYPE}}** (same for all creatives)
+   - Lead Type: **Offer** / **Promise** / **Problem-Solution** / **Secret** / **Proclamation** / **Story**
+   - Status: **Ready For Internal**
+
+### Output Format
+
+Output the completed batch in this exact format:
+
+\`\`\`
+BATCH: [Batch Name \u2014 e.g., "Social Proof Gmail Batch - Week of [Date]"]
+BATCH TYPE: Static
+BATCH CATEGORY: [e.g., "Social Proof", "Cost Exposure", "Price Anchoring"]
+PRIORITY: Standard
+
+=== OVERVIEW ===
+AI Allowed?: Yes, AI Is Allowed
+Photo Folder:
+Reference: [List reference winning ads this batch builds on]
+Idea Name: [Short batch concept \u2014 2-4 words max]
+Angle Name: [Short angle \u2014 2-3 words max]
+Style Name: [Base visual style \u2014 e.g., "Gmail" not "Gmail Dark" \u2014 team makes light/dark variations]
+Static Format: {{STATIC_FORMAT}}
+Task: Design {{BATCH_SIZE}} static ad creatives for Meta ads
+General Notes: [Any non-design notes for the team]
+Design Notes: [Design-specific guidance]
+Link to Brand Assets: {{BRAND_ASSETS}}
+Ratio Format(s): {{RATIO_FORMAT}}
+Ad Platform: {{AD_PLATFORM}}
+Avatar: {{AVATAR}}
+Brand Voice: {{BRAND_VOICE_STATIC}}
+Net New/Iteration: {{NET_NEW}}
+Landing Page URL: {{LANDING_PAGE}}
+Conversion Objective: Lead Generation
+Copywriter: {{COPYWRITER}}
+
+=== CREATIVE 1 ===
+Creative Name: [Angle Name - variable based on Variation Type] (Copy variation: "Quiet Overwhelm - Offer Lead" | Visual variation: "VAM Crew Members - Organic Looking") \u2014 tracker auto-appends # and CID
+File: [leave blank]
+Notes: [Data-driven rationale in 1-2 sentences]
+Design Notes: [Specific visual direction]
+Variation Type: [Copy / Visual]
+Awareness Level: [Most Aware / Product Aware / Solution Aware / Problem Aware / Unaware]
+Lead Type: [Offer / Promise / Problem-Solution / Secret / Proclamation / Story]
+Status: Ready For Internal
+Copy: [Complete ad copy \u2014 headline, body text, CTA]
+
+=== CREATIVE 2 ===
+[Same format]
+
+=== CREATIVE 3 ===
+[Same format]
+
+=== CREATIVE 4 ===
+[Same format]
+
+=== CREATIVE 5 ===
+[Same format]
+
+=== BATCH SUMMARY ===
+ClickUp Submission Note: [1-line summary]
+Assign To: Lead Designer
+Hook Types Used: [List hook types]
+Awareness Distribution: [List per creative]
+References: [List winning ads these build on]
+\`\`\``;
+
+const VIDEO_GENERATOR = `## CRITICAL: OUTPUT PLAIN TEXT ONLY — DO NOT USE ANY TOOLS OR SKILLS
+Do not invoke the docx skill, pdf skill, xlsx skill, or any other skill. Do not create files. Do not run code. Output the briefs as plain text directly in this chat. The user will copy your text into a separate Doc Generator tool.
+
+**Model requirement:** This prompt is designed for **Claude Opus 4.6**.
+
+## GENERATE VIDEO BATCH
+
+Generate a batch of {{BATCH_SIZE}} video ad creatives for VAM.
+
+### Batch Parameters
+- **Batch Focus:** {{BATCH_FOCUS}}
+- **Variation Type (all 5 must match):** {{VARIATION_TYPE}}
+- **Awareness Distribution:** {{AWARENESS}}
+- **Net New/Iteration:** {{NET_NEW}}
+- **Landing Page URL:** {{LANDING_PAGE}}
+- **Brand Assets Link:** {{BRAND_ASSETS}}
+- **Copywriter:** {{COPYWRITER}}
+{{ADDITIONAL_NOTES}}
+
+### Generation Rules
+
+1. **Apply 70-20-10 across the 5 creatives:**
+   - Creatives 1-3 (70%): Variations of proven UGC hooks
+   - Creative 4 (20%): Hook adapted from another niche's testimonial format
+   - Creative 5 (10%): Experimental new hook angle
+
+2. **UGC testimonials must dominate** \u2014 at least 4 of 5 should be UGC direct-to-camera.
+
+3. **Each hook script must feel natural and unscripted.** Write talking points, not teleprompter scripts.
+
+4. **DO NOT use:** Animated truck formats, holiday themes, educational/explainer formats, polished/branded production, ChatGPT conversation format
+
+5. **Provide 2-3 hook variations per creative**
+
+6. **Assign proper naming using Creative Tracker formula:** \`[Angle Name] - [Lead Type] [Variation Type]\` \u2014 e.g., Lead variation: \`Done For You - Problem-Solution Lead\`, Body variation: \`Real Trucks Real Prices - Problem-Solution Body\`. **Keep Angle Names SHORT** (2-4 words). The number (#) and VID are auto-generated by the tracker.
+
+7. **Single variable testing \u2014 ALL 5 videos in this batch MUST use the SAME Variation Type: {{VARIATION_TYPE}}**
+   Do NOT mix variation types within a batch. This is critical for isolating what\u2019s working.
+
+8. **Dropdown constraints \u2014 use ONLY these values:**
+   - Video Type: **Ad Video**
+   - Variation Type: **{{VARIATION_TYPE}}** (same for all 5)
+   - Lead Type: **Offer** / **Promise** / **Problem-Solution** / **Secret** / **Proclamation** / **Story**
+   - Status: **Ready For Internal**
+
+### Output Format
+
+Output the completed batch in this exact format:
+
+\`\`\`
+BATCH: [Batch Name]
+BATCH TYPE: Video
+BATCH CATEGORY: [e.g., "UGC Cost Angle"]
+PRIORITY: Standard
+
+=== OVERVIEW ===
+Video Type: Ad Video
+AI Allowed?: Yes, AI Is Allowed
+Footage Folder:
+Idea Name: [Short batch concept \u2014 2-4 words max]
+Angle Name: [Short angle \u2014 2-3 words max]
+Style Name: [Short style \u2014 2-3 words max]
+Task: Create 5 video ad creatives for Meta ads
+General Notes: [Non-video notes]
+Editing Notes: [Editing guidance]
+Link to Brand Assets: {{BRAND_ASSETS}}
+Any Other Relevant Assets:
+Ratio Format(s): {{RATIO_FORMAT}}
+Ad Platform: {{AD_PLATFORM}}
+Avatar: {{AVATAR}}
+Brand Voice: {{BRAND_VOICE_VIDEO}}
+Net New/Iteration: {{NET_NEW}}
+Landing Page URL: {{LANDING_PAGE}}
+Conversion Objective: Lead Generation
+Copywriter: {{COPYWRITER}}
+
+=== VIDEO 1 ===
+Creative Name: [Angle Name - Lead Type VariationType] (e.g., Lead: "Done For You - Problem-Solution Lead" | Body: "Real Trucks - Problem-Solution Body") \u2014 tracker auto-appends # and VID
+Video File: [leave blank]
+Notes: [Data-driven rationale]
+Editing Notes: [Pacing, text overlays, captions]
+Variation Type: [Lead / Pattern Interrupt / Graphic Overlay / Body / CTA]
+Awareness Level: [Most Aware / Product Aware / Solution Aware / Problem Aware / Unaware]
+Lead Type: [Offer / Promise / Problem-Solution / Secret / Proclamation / Story]
+Status: Ready For Internal
+
+Lead Script:
+[HOOK \u2014 First 3-5 seconds. Provide 2-3 variations:]
+Variation A: "[Exact words]"
+Variation B: "[Exact words]"
+Variation C: "[Exact words]"
+
+Body Script:
+[BODY \u2014 15-25 seconds. Talking points:]
+- Talking Point 1: [What to cover]
+- Talking Point 2: [What to cover]
+- Talking Point 3: [What to cover]
+
+[CTA \u2014 Last 3-5 seconds:]
+"[Exact CTA words]"
+
+[TALENT DIRECTION:]
+- Setting: [Home interior / in front of boxes / outside new home]
+- Camera: [iPhone selfie-style / tripod medium]
+- Demographic: [Age range, gender, ethnicity]
+- Tone: [Excited / Relieved / Surprised / Conversational]
+- Key Direction: Must feel like authentic iPhone video, NOT polished production
+
+[FACEBOOK AD COPY:]
+- Primary Text: [2-4 sentences above video]
+- Headline: [Below video]
+- CTA Button: [Get Quote / Learn More]
+
+=== VIDEO 2 ===
+[Same format]
+
+=== VIDEO 3 ===
+[Same format]
+
+=== VIDEO 4 ===
+[Same format]
+
+=== VIDEO 5 ===
+[Same format]
+
+=== BATCH SUMMARY ===
+ClickUp Submission Note: [1-line summary]
+Assign To: Lead Video Editor
+Talent Requirements: [# performers, demographics]
+Hook Types Used: [List hook types]
+Awareness Distribution: [List per creative]
+References: [List winning ads these build on]
+\`\`\``;
+
+const COPY_GENERATOR = `## CRITICAL: OUTPUT PLAIN TEXT ONLY — DO NOT USE ANY TOOLS OR SKILLS
+Do not invoke the docx skill, pdf skill, xlsx skill, or any other skill. Do not create files. Do not run code. Output the briefs as plain text directly in this chat. The user will copy your text into a separate Doc Generator tool.
+
+**Model requirement:** This prompt is designed for **Claude Opus 4.6**.
+
+## GENERATE BODY COPY BATCH
+
+Generate a batch of {{BATCH_SIZE}} body copy variations for VAM.
+
+### Batch Parameters
+- **Batch Focus:** {{BATCH_FOCUS}}
+- **Variation Type (all 5 must match):** {{VARIATION_TYPE}}
+- **Hold Constant:** {{HOLD_CONSTANT}}
+- **Net New/Iteration:** {{NET_NEW}}
+- **Landing Page URL:** {{LANDING_PAGE}}
+- **Copywriter:** {{COPYWRITER}}
+{{ADDITIONAL_NOTES}}
+
+### Generation Rules
+
+1. **Apply 70-20-10:**
+   - Copies 1-3 (70%): Variations of proven CHK/CB combinations
+   - Copy 4 (20%): Hook angle adapted from another industry
+   - Copy 5 (10%): Experimental new approach
+
+2. **Each variation must use a DIFFERENT verbal hook type**
+
+3. **Every variation must work for both static and video formats**
+
+4. **Be specific, not generic** \u2014 include numbers, prices, proof points.
+
+5. **Assign proper naming using Creative Tracker formula:** For Lead/Body/CTA: \`[Angle Name] - [Lead Type] [Variation Type]\` \u2014 e.g., \`Heart3Heart - Promise Lead\`. For Full: \`[Angle Name] - [Lead Type]\` \u2014 e.g., \`Heart3Heart - Promise\`. When Copy Type = Asset Set: \`[Angle Name] - Asset Set\`. **Keep Angle Names SHORT** (2-4 words). The number (#) and CPID are auto-generated by the tracker.
+
+6. **Single variable testing \u2014 ALL 5 copies in this batch MUST use the SAME Variation Type: {{VARIATION_TYPE}}**
+   Do NOT mix variation types within a batch. This is critical for isolating what\u2019s working.
+
+7. **Dropdown constraints \u2014 use ONLY these values:**
+   - Variation Type: **{{VARIATION_TYPE}}** (same for all 5)
+   - Lead Type: **Offer** / **Promise** / **Problem-Solution** / **Secret** / **Proclamation** / **Story**
+   - Status: **Ready For Internal**
+
+### Output Format
+
+Output the completed batch in this exact format:
+
+\`\`\`
+BATCH: [Batch Name]
+BATCH TYPE: Body Copy
+BATCH CATEGORY: [e.g., "New Hooks on Proven Body"]
+
+=== OVERVIEW ===
+AI Allowed?: Yes, AI Is Allowed
+Idea Name: [Short batch concept \u2014 2-4 words max]
+Angle Name: [Short angle \u2014 2-3 words max]
+Copy Type: {{COPY_TYPE}}
+Task: Write 5 body copy variations for Meta ads
+General Notes: [Context]
+Ad Platform: {{AD_PLATFORM}}
+Net New/Iteration: {{NET_NEW}}
+Landing Page URL: {{LANDING_PAGE}}
+Conversion Objective: Lead Generation
+Copywriter: {{COPYWRITER}}
+
+=== COPY 1 ===
+Name: [Angle Name - Lead Type VariationType] (e.g., Lead: "Heart3Heart - Promise Lead" | Full: "Heart3Heart - Promise" | Asset Set: "Heart3Heart - Asset Set") \u2014 tracker auto-appends # and CPID
+Notes: [Data-driven rationale]
+Variation Type: [Lead / Body / CTA / Full]
+Awareness Level: [Most Aware / Product Aware / Solution Aware / Problem Aware / Unaware]
+Lead Type: [Offer / Promise / Problem-Solution / Secret / Proclamation / Story]
+Status: Ready For Internal
+
+Headline: [Max 40 characters]
+
+Body Copy:
+[2-4 sentences + CTA line]
+
+=== COPY 2 ===
+[Same format]
+
+=== COPY 3 ===
+[Same format]
+
+=== COPY 4 ===
+[Same format]
+
+=== COPY 5 ===
+[Same format]
+
+=== BATCH SUMMARY ===
+Hook Types Used: [List hook types]
+Awareness Distribution: [List per copy]
+Recommended Visual Pairings: [Which SV styles pair best]
+References: [List winning copy combos these build on]
+\`\`\``;
+
+// === FOCUS SUGGESTIONS ===
+const FOCUS_SUGGESTIONS = {
+  static: [
+    "Social proof Gmail variations",
+    "Cost exposure AppleNote",
+    "Price anchoring new visuals",
+    "Experimental hooks on proven visuals",
+    "Savings angle with Twitter style"
+  ],
+  video: [
+    "UGC cost angle with new hooks",
+    "UGC savings testimonial new demographics",
+    "Problem-solution lead format",
+    "Diverse demographic UGC",
+    "Fear-of-loss UGC testimonials"
+  ],
+  copy: [
+    "New hooks for proven CB3_CostSavings body",
+    "New body copy for proven CHK2 hook",
+    "Full new hook+body combos",
+    "Problem Aware copy angles",
+    "Secret/curiosity hook tests"
+  ]
+};
+
+// === TOP PERFORMERS (for Iteration Mode) ===
+let TOP_PERFORMERS = {
+  static: [
+    { id: 'sc7_sv11', name: 'SC7_CheckThis | SV11_TwitterStyleLight', angle: 'Social Proof Shock', visual: 'SV11_TwitterStyleLight', roas: 1.75, spend: 20962, tier: 'winner', description: 'Real customer scenario, Twitter-style light card' },
+    { id: 'sc7_sv8', name: 'SC7_CheckThis | SV8_Gmail', angle: 'Social Proof Shock', visual: 'SV8_Gmail', roas: 1.44, spend: 52030, tier: 'winner', description: 'Highest volume winner, Gmail dark mode notification' },
+    { id: 'sc1_sv3', name: 'SC1_LongDistance1597 | SV3_TruckBack', angle: 'Price Anchoring', visual: 'SV3_TruckBack', roas: 1.35, spend: 43000, tier: 'winner', description: 'Specific low price point with truck rear photo' },
+    { id: 'sc5_sv7', name: 'SC5_MovingChecklist | SV7_AppleNote', angle: 'Emotional Relief', visual: 'SV7_AppleNote', roas: 1.35, spend: 13000, tier: 'winner', description: 'Utility/checklist approach in Apple Notes format' },
+    { id: 'sc8_sv8', name: 'SC8_Dodged4kBill | SV8_Gmail', angle: 'Social Proof Shock', visual: 'SV8_Gmail', roas: 1.33, spend: 17000, tier: 'winner', description: 'Customer avoided large bill, Gmail dark mode' },
+    { id: 'sc88_sv6', name: 'SC88_CityPricesV4 | SV6_TruckFreeway', angle: 'Price Anchoring', visual: 'SV6_TruckFreeway', roas: 2.01, spend: 847, tier: 'emerging', description: 'City price comparison V4, truck on freeway' },
+    { id: 'sc33_sv9', name: 'SC33_CheckThisHolidayV3 | SV9_GmailLight', angle: 'Social Proof Shock', visual: 'SV9_GmailLight', roas: 2.05, spend: 897, tier: 'emerging', description: 'CheckThis variant in light Gmail format' },
+    { id: 'sc9_sv8', name: 'SC9_AlmostPaidDouble | SV8_Gmail', angle: 'Cost Exposure', visual: 'SV8_Gmail', roas: 1.15, spend: 69404, tier: 'winner', description: 'Cost exposure showing how much others overpay' },
+    { id: 'sc11_sv8', name: 'SC11_FlyingFunny | SV8_Gmail', angle: 'Humor/Relatability', visual: 'SV8_Gmail', roas: 1.10, spend: 27000, tier: 'winner', description: 'Lighthearted moving stress humor, Gmail format' },
+    { id: 'sc2_sv8', name: 'SC2_StartingAt1597 | SV8_Gmail', angle: 'Price Anchoring', visual: 'SV8_Gmail', roas: 1.32, spend: 34000, tier: 'winner', description: 'Price anchoring at $1,597 in Gmail format' }
+  ],
+  video: [
+    { id: 'dfy_ps_lead7', name: 'DoneForYou Problem-Solution Lead 7', angle: 'Problem-Solution', visual: 'Done For You format', roas: 31.42, spend: 64, tier: 'emerging', description: 'Problem-solution auto format, massive early signal' },
+    { id: 'vhk20_vv10', name: 'VHK20_Ialmostdidnt | VB5 | VV10 (Asian Woman)', angle: 'Social Proof Shock', visual: 'UGC Asian Woman', roas: 9.60, spend: 601, tier: 'winner', description: '"I almost didn\'t..." UGC testimonial' },
+    { id: 'vhk22_vv11', name: 'VHK22_IThoughtCostMore | VB6 | VV11 (Asian Woman)', angle: 'Cost Exposure', visual: 'UGC Asian Woman', roas: 3.60, spend: 204, tier: 'emerging', description: '"I thought it cost more" UGC cost angle' },
+    { id: 'vhk13_vv3', name: 'VHK13_TruckonTime | VB1 | VV3', angle: 'Emotional Relief', visual: 'Side Truck Animation', roas: 2.88, spend: 660, tier: 'winner', description: 'Truck on time animation, consistent performer' },
+    { id: 'organic3', name: 'Organic 3 - VAM Crew Members', angle: 'Authenticity', visual: 'Organic Crew Footage', roas: 11.37, spend: 1072, tier: 'emerging', description: 'Real crew member footage, authentic feel' },
+    { id: 'similar_proof', name: 'Similar Customer Proof - Offer Lead 7', angle: 'Social Proof', visual: 'Offer Lead format', roas: 5.13, spend: 506, tier: 'emerging', description: 'Similar customer proof with offer lead format' }
+  ],
+  copy: [
+    { id: 'chk2_cb1', name: 'CHK2_StartingAt1597 | CB1_Savings', angle: 'Price Anchoring + Savings', hook: 'CHK2_StartingAt1597', body: 'CB1_Savings', roas: 1.32, spend: 34000, tier: 'winner', description: 'Only true Winner \u2014 price anchoring with savings body' },
+    { id: 'chk2_cb3', name: 'CHK2_StartingAt1597 | CB3_CostSavings', angle: 'Price Anchoring + Cost', hook: 'CHK2_StartingAt1597', body: 'CB3_CostSavings', roas: 1.18, spend: 115307, tier: 'winner', description: 'Highest volume \u2014 price hook with cost savings body' },
+    { id: 'chk3_cb2', name: 'CHK3_StressFreeLongDistance | CB2_StressFree', angle: 'Emotional Relief', hook: 'CHK3_StressFreeLongDistance', body: 'CB2_StressFree', roas: 1.09, spend: 53803, tier: 'on-fence', description: 'Stress-free messaging with matching body' },
+    { id: 'chk1_cb1', name: 'CHK1_SaveUpTo50 | CB1_Savings', angle: 'Savings Quantification', hook: 'CHK1_SaveUpTo50', body: 'CB1_Savings', roas: 1.08, spend: 60130, tier: 'on-fence', description: 'Savings percentage with savings body' },
+    { id: 'chk15_cb8', name: 'CHK15_FullServiceMoves | CB8_BeforeYouBook', angle: 'Service Promise', hook: 'CHK15_FullServiceMoves', body: 'CB8_BeforeYouBook', roas: 1.28, spend: 2500, tier: 'emerging', description: 'Full service positioning with booking urgency' }
+  ]
+};
+
+// === NET NEW OPTIONS (for Guided Mode) ===
+let NET_NEW_OPTIONS = {
+  visualStyles: {
+    static: [
+      { value: 'Gmail', label: 'Gmail', tier: 'proven', note: '5 winners, lowest CPM — team makes dark + light' },
+      { value: 'TwitterStyle', label: 'Twitter Style', tier: 'proven', note: '1.75x highest ROAS' },
+      { value: 'TruckBack', label: 'Truck Back Photo', tier: 'proven', note: '3 winners' },
+      { value: 'TruckFreeway', label: 'Truck Freeway', tier: 'proven', note: '2.01x re-emerged' },
+      { value: 'AppleNote', label: 'Apple Note', tier: 'emerging', note: 'Works with cost exposure — team makes dark + light' },
+      { value: 'BeforeAndAfter', label: 'Before & After', tier: 'untested', note: 'Early signal 15.98x (tiny sample)' },
+      { value: 'organic_crew_photo', label: 'Organic Crew Photo', tier: 'untested', note: 'Authentic crew footage style' },
+      { value: 'FullTruckInterior', label: 'Full Truck Interior', tier: 'untested', note: 'New, not yet tested' },
+      { value: 'custom', label: '+ Custom Style', tier: 'custom', note: 'Describe your own' }
+    ],
+    video: [
+      { value: 'UGC_AsianWoman', label: 'UGC Asian Woman', tier: 'proven', note: '8-11% CTR, top performer' },
+      { value: 'UGC_WhiteWoman', label: 'UGC White Woman', tier: 'proven', note: '8-11% CTR' },
+      { value: 'DoneForYou_Format', label: 'Done For You Format', tier: 'emerging', note: '31.42x early signal' },
+      { value: 'Organic_Crew', label: 'Organic Crew Footage', tier: 'emerging', note: '11.37x early' },
+      { value: 'UGC_Male', label: 'Male Talent UGC', tier: 'untested', note: 'Not yet tested' },
+      { value: 'UGC_Couple', label: 'Couple UGC', tier: 'untested', note: 'Not yet tested' },
+      { value: 'UGC_Family', label: 'Family UGC', tier: 'untested', note: 'Not yet tested' },
+      { value: 'custom', label: '+ Custom Format', tier: 'custom', note: 'Describe your own' }
+    ]
+  },
+  copyAngles: [
+    { value: 'Social Proof Shock', label: 'Social Proof Shock', tier: 'proven', note: 'CheckThis, Dodged4k, AlmostPaidDouble' },
+    { value: 'Price Anchoring', label: 'Price Anchoring', tier: 'proven', note: '$1,597, CityPrices' },
+    { value: 'Cost Exposure', label: 'Cost Exposure', tier: 'emerging', note: 'Hidden fees, "I thought it cost more"' },
+    { value: 'Savings Quantification', label: 'Savings Quantification', tier: 'proven', note: 'Save up to 50%' },
+    { value: 'Emotional Relief', label: 'Emotional Relief', tier: 'proven', note: 'Stress-free, checklist' },
+    { value: 'Humor/Relatability', label: 'Humor / Relatability', tier: 'proven', note: 'FlyingFunny' },
+    { value: 'Fear of Loss', label: 'Fear of Loss', tier: 'untested', note: 'New angle to explore' },
+    { value: 'Curiosity/Secret', label: 'Curiosity / Secret', tier: 'untested', note: 'Hidden fee angle' },
+    { value: 'custom', label: '+ Custom Angle', tier: 'custom', note: '' }
+  ],
+  hookTypes: [
+    { value: 'Let Claude decide', label: 'Let Claude Decide', example: 'Claude picks the best mix automatically' },
+    { value: 'Labels', label: 'Labels', example: '"Long-distance movers..." — identity words your audience sees themselves in' },
+    { value: 'Questions', label: 'Questions', example: '"Moving across the country?" — yes-questions or open-ended curiosity' },
+    { value: 'Conditionals', label: 'Conditionals', example: '"If you\'re moving out of state, you need to see this" — if X then Y' },
+    { value: 'Commands', label: 'Commands', example: '"Watch this before you book a mover" — direct instruction' },
+    { value: 'Statements', label: 'Statements', example: '"Starting at $1,597" — declarative fact or bold claim' },
+    { value: 'Lists/Steps', label: 'Lists/Steps', example: '"3 things your mover won\'t tell you" — numbered or sequential' },
+    { value: 'Narratives', label: 'Narratives', example: '"I almost didn\'t use them..." — story or personal experience' },
+    { value: 'Exclamations', label: 'Exclamations', example: '"Check this out!" — shock, surprise, or strong emotion (#1 for VAM)' }
+  ]
+};
+
+const ITERATION_SUGGESTIONS = [
+  "New visual style, same copy",
+  "Different hook type",
+  "Adjust for colder audience",
+  "Swap visual pairing",
+  "Different copy angle, same visual",
+  "Test new awareness level"
+];
+
+// === IDEATION GENERATOR (pitch concepts, don't produce briefs) ===
+const IDEATION_GENERATOR = `You are a Meta ads creative strategist for VAM, a long-distance moving company working through BAD Marketing agency.
+
+## CRITICAL INSTRUCTIONS — READ FIRST
+
+**DO NOT use any tools, skills, or file-creation capabilities.** Do not invoke the docx skill, pdf skill, xlsx skill, or any other skill. Do not create files. Do not run code. Your ENTIRE output must be plain text in this chat conversation — nothing else.
+
+**Model requirement:** This prompt is designed for **Claude Opus 4.6**. If you are running on a different model, note this to the user.
+
+When it comes time to write the final briefs, output them as **plain text directly in the chat** using the exact format specified below. The user will copy-paste your text output into a separate Doc Generator tool. You are NOT responsible for creating any documents.
+
+## YOUR TASK
+
+Analyze the performance data and creative direction below, then **pitch 3-5 creative angle concepts** for a {{BATCH_TYPE}} batch. Do NOT write any briefs yet — just pitch the ideas so we can discuss them first.
+
+### Direction
+- **Batch Type:** {{BATCH_TYPE}}
+- **Focus:** {{FOCUS}}
+{{CONSTRAINTS}}
+
+{{CONTEXT}}
+
+## HOW TO PITCH EACH CONCEPT
+
+For each of your 3-5 concepts, provide:
+
+1. **Concept Name** (2-4 words — this becomes the angle name)
+2. **The Angle** — What's the core message or emotion? (1-2 sentences)
+3. **Why This Works** — What data or pattern from the performance context supports this? Reference specific winners, metrics, or gaps.
+4. **Example Hooks** — Write 2-3 sample hooks showing how this would actually sound in an ad. Use different hook types (question, statement, narrative, etc.)
+5. **Visual Pairing** — What visual style would you pair this with and why?
+6. **Awareness Level** — Which awareness level(s) does this target?
+7. **Confidence** — Rate as Proven (based on existing winners), Adjacent (adapting what works), or Experimental (new territory). Explain briefly.
+
+## AFTER PITCHING — GUIDED DECISION FLOW
+
+After presenting all concepts, you MUST guide me through decisions using **numbered multiple-choice options**. Never ask open-ended questions. Always give me clear choices to pick from.
+
+### Step 1: Pick concepts
+Present a multiple-choice list:
+
+**Which concepts do you want to move forward with?** (pick numbers, or combine)
+- **A)** Concepts 1 & 2 (the strongest proven angles)
+- **B)** Concepts 1 & 3 (mix of proven + experimental)
+- **C)** Concepts 2, 3 & 4 (broader mix)
+- **D)** All of them — develop all concepts into briefs
+- **E)** Let me specify (I'll tell you which ones)
+
+Adjust the specific options based on what you pitched, but ALWAYS use this lettered format.
+
+### Step 2: Refine direction
+After I pick concepts, ask ONE follow-up with options:
+
+**Any changes before I write the briefs?**
+- **A)** Looks good — write the briefs as-is
+- **B)** Adjust the awareness levels (I'll tell you)
+- **C)** Change a visual pairing (I'll tell you which)
+- **D)** Tweak the hooks / copy angle (I'll tell you how)
+- **E)** Combine two concepts into one angle
+
+If I pick A, go straight to writing briefs. If I pick B-E, ask one short clarifying question, then present option A again.
+
+### Step 3: Final confirmation
+Before writing, confirm:
+
+**Ready to generate 5 production briefs. Here's what I'll write:**
+- [Brief summary of selected concepts, angles, and awareness levels]
+
+**Go ahead?**
+- **A)** Yes — write the briefs ✅
+- **B)** Wait — I want to change something
+
+When I confirm, output the briefs in the format below.
+
+### IMPORTANT RULES FOR THIS FLOW:
+- ALWAYS use lettered options (A, B, C, D...) — never ask open-ended questions
+- Keep each step to ONE question with 3-5 options max
+- If I reply with just a letter (e.g. "A" or "B"), that's my answer — proceed immediately
+- The goal is to get from pitch → briefs in 2-3 quick exchanges, not a long conversation
+- If I say "write the briefs" or "looks good" at ANY point, skip remaining steps and generate output
+
+## WHEN I SAY "WRITE THE BRIEFS"
+
+When I tell you to write/draft/generate the briefs, output them as **plain text directly in this chat** using this EXACT format. Do NOT create any files, do NOT use the docx skill or any other skill, do NOT run any code. Just type the briefs out as plain text. The user will copy your text and paste it into a separate Doc Generator tool to create the .docx file.
+
+\`\`\`
+BATCH: [Batch Name]
+BATCH TYPE: [Static / Video / Body Copy]
+BATCH CATEGORY: [e.g., "Social Proof", "Cost Exposure"]
+PRIORITY: Standard
+
+=== OVERVIEW ===
+AI Allowed?: Yes, AI Is Allowed
+Photo Folder:
+Reference: [List reference winning ads]
+Idea Name: [Short batch concept — 2-4 words]
+Angle Name: [Short angle — 2-3 words]
+Style Name: [Visual style name]
+Task: Design 5 [static/video/copy] ad creatives for Meta ads
+General Notes: [Any notes for the team]
+Design Notes: [Design guidance]
+Net New/Iteration: [Net New / Iteration]
+Copywriter: [Name]
+
+=== CREATIVE 1 ===
+Creative Name: [Angle Name - Variation]
+File:
+Notes: [1-2 sentence data-driven rationale]
+Design Notes: [Visual direction]
+Variation Type: [Copy / Visual / Lead / Body / etc.]
+Awareness Level: [Most Aware / Product Aware / Solution Aware / Problem Aware / Unaware]
+Lead Type: [Offer / Promise / Problem-Solution / Secret / Proclamation / Story]
+Status: Ready For Internal
+Copy: [Complete ad copy — headline, body text, CTA]
+
+=== CREATIVE 2 ===
+[Same format]
+
+=== CREATIVE 3 ===
+[Same format]
+
+=== CREATIVE 4 ===
+[Same format]
+
+=== CREATIVE 5 ===
+[Same format]
+
+=== BATCH SUMMARY ===
+ClickUp Submission Note: [1-line summary]
+Hook Types Used: [List]
+Awareness Distribution: [List per creative]
+References: [List winning ads these build on]
+\`\`\`
+
+**CRITICAL:** You MUST use the === CREATIVE 1 ===, === CREATIVE 2 === etc. headers exactly as shown. The Doc Generator tool parses these headers to split briefs into individual creatives. Without them, the export will fail.
+
+## RULES
+- Do NOT skip the pitch phase — always present concepts first
+- Reference actual performance data to justify your recommendations
+- Mix confidence levels: at least 1 Proven, at least 1 Adjacent or Experimental
+- Each concept should target a different awareness level or hook approach
+- Do NOT use any element from the Confirmed Losing Patterns
+`;
+
+// === TIMEFRAME METRICS (per-ad performance by time window) ===
+const TIMEFRAME_METRICS = {
+  // --- Static Ads ---
+  'sc7_sv11': {
+    '7d': { roas: 1.92, costPerConnected: 198, spend: 2800 },
+    '14d': { roas: 1.83, costPerConnected: 210, spend: 5900 },
+    '30d': { roas: 1.78, costPerConnected: 218, spend: 11500 },
+    'all': { roas: 1.75, costPerConnected: 225, spend: 20962 }
+  },
+  'sc7_sv8': {
+    '7d': { roas: 1.38, costPerConnected: 302, spend: 4100 },
+    '14d': { roas: 1.41, costPerConnected: 295, spend: 8500 },
+    '30d': { roas: 1.43, costPerConnected: 290, spend: 18000 },
+    'all': { roas: 1.44, costPerConnected: 288, spend: 52030 }
+  },
+  'sc1_sv3': {
+    '7d': { roas: 1.28, costPerConnected: 325, spend: 3500 },
+    '14d': { roas: 1.31, costPerConnected: 318, spend: 7200 },
+    '30d': { roas: 1.33, costPerConnected: 312, spend: 15000 },
+    'all': { roas: 1.35, costPerConnected: 308, spend: 43000 }
+  },
+  'sc5_sv7': {
+    '7d': { roas: 1.45, costPerConnected: 280, spend: 1800 },
+    '14d': { roas: 1.40, costPerConnected: 290, spend: 3500 },
+    '30d': { roas: 1.37, costPerConnected: 298, spend: 7000 },
+    'all': { roas: 1.35, costPerConnected: 305, spend: 13000 }
+  },
+  'sc8_sv8': {
+    '7d': { roas: 1.25, costPerConnected: 335, spend: 2200 },
+    '14d': { roas: 1.29, costPerConnected: 322, spend: 4500 },
+    '30d': { roas: 1.31, costPerConnected: 318, spend: 9000 },
+    'all': { roas: 1.33, costPerConnected: 312, spend: 17000 }
+  },
+  'sc88_sv6': {
+    '7d': { roas: 2.35, costPerConnected: 155, spend: 320 },
+    '14d': { roas: 2.18, costPerConnected: 168, spend: 520 },
+    '30d': { roas: 2.08, costPerConnected: 178, spend: 700 },
+    'all': { roas: 2.01, costPerConnected: 185, spend: 847 }
+  },
+  'sc33_sv9': {
+    '7d': { roas: 2.28, costPerConnected: 160, spend: 350 },
+    '14d': { roas: 2.15, costPerConnected: 172, spend: 580 },
+    '30d': { roas: 2.10, costPerConnected: 176, spend: 740 },
+    'all': { roas: 2.05, costPerConnected: 180, spend: 897 }
+  },
+  'sc9_sv8': {
+    '7d': { roas: 1.08, costPerConnected: 388, spend: 5200 },
+    '14d': { roas: 1.11, costPerConnected: 378, spend: 10500 },
+    '30d': { roas: 1.13, costPerConnected: 372, spend: 22000 },
+    'all': { roas: 1.15, costPerConnected: 365, spend: 69404 }
+  },
+  'sc11_sv8': {
+    '7d': { roas: 1.02, costPerConnected: 415, spend: 2000 },
+    '14d': { roas: 1.06, costPerConnected: 402, spend: 4200 },
+    '30d': { roas: 1.08, costPerConnected: 395, spend: 9000 },
+    'all': { roas: 1.10, costPerConnected: 390, spend: 27000 }
+  },
+  'sc2_sv8': {
+    '7d': { roas: 1.25, costPerConnected: 330, spend: 2700 },
+    '14d': { roas: 1.28, costPerConnected: 325, spend: 5500 },
+    '30d': { roas: 1.30, costPerConnected: 320, spend: 12000 },
+    'all': { roas: 1.32, costPerConnected: 315, spend: 34000 }
+  },
+  // --- Video Ads ---
+  'dfy_ps_lead7': {
+    '7d': { roas: 28.50, costPerConnected: 42, spend: 24 },
+    '14d': { roas: 30.10, costPerConnected: 44, spend: 40 },
+    '30d': { roas: 31.00, costPerConnected: 43, spend: 55 },
+    'all': { roas: 31.42, costPerConnected: 45, spend: 64 }
+  },
+  'vhk20_vv10': {
+    '7d': { roas: 11.20, costPerConnected: 72, spend: 180 },
+    '14d': { roas: 10.40, costPerConnected: 78, spend: 320 },
+    '30d': { roas: 9.90, costPerConnected: 82, spend: 480 },
+    'all': { roas: 9.60, costPerConnected: 85, spend: 601 }
+  },
+  'vhk22_vv11': {
+    '7d': { roas: 4.10, costPerConnected: 125, spend: 75 },
+    '14d': { roas: 3.85, costPerConnected: 132, spend: 130 },
+    '30d': { roas: 3.70, costPerConnected: 138, spend: 170 },
+    'all': { roas: 3.60, costPerConnected: 142, spend: 204 }
+  },
+  'vhk13_vv3': {
+    '7d': { roas: 2.65, costPerConnected: 178, spend: 190 },
+    '14d': { roas: 2.75, costPerConnected: 172, spend: 350 },
+    '30d': { roas: 2.82, costPerConnected: 168, spend: 520 },
+    'all': { roas: 2.88, costPerConnected: 165, spend: 660 }
+  },
+  'organic3': {
+    '7d': { roas: 13.50, costPerConnected: 58, spend: 310 },
+    '14d': { roas: 12.40, costPerConnected: 65, spend: 550 },
+    '30d': { roas: 11.80, costPerConnected: 68, spend: 820 },
+    'all': { roas: 11.37, costPerConnected: 72, spend: 1072 }
+  },
+  'similar_proof': {
+    '7d': { roas: 5.80, costPerConnected: 98, spend: 150 },
+    '14d': { roas: 5.45, costPerConnected: 105, spend: 280 },
+    '30d': { roas: 5.28, costPerConnected: 110, spend: 400 },
+    'all': { roas: 5.13, costPerConnected: 115, spend: 506 }
+  },
+  // --- Copy Ads ---
+  'chk2_cb1': {
+    '7d': { roas: 1.38, costPerConnected: 302, spend: 2800 },
+    '14d': { roas: 1.35, costPerConnected: 310, spend: 5500 },
+    '30d': { roas: 1.33, costPerConnected: 315, spend: 12000 },
+    'all': { roas: 1.32, costPerConnected: 320, spend: 34000 }
+  },
+  'chk2_cb3': {
+    '7d': { roas: 1.15, costPerConnected: 362, spend: 8500 },
+    '14d': { roas: 1.16, costPerConnected: 358, spend: 17000 },
+    '30d': { roas: 1.17, costPerConnected: 355, spend: 38000 },
+    'all': { roas: 1.18, costPerConnected: 350, spend: 115307 }
+  },
+  'chk3_cb2': {
+    '7d': { roas: 1.04, costPerConnected: 420, spend: 4000 },
+    '14d': { roas: 1.06, costPerConnected: 412, spend: 8200 },
+    '30d': { roas: 1.08, costPerConnected: 405, spend: 18000 },
+    'all': { roas: 1.09, costPerConnected: 398, spend: 53803 }
+  },
+  'chk1_cb1': {
+    '7d': { roas: 1.02, costPerConnected: 432, spend: 4500 },
+    '14d': { roas: 1.05, costPerConnected: 422, spend: 9000 },
+    '30d': { roas: 1.07, costPerConnected: 415, spend: 20000 },
+    'all': { roas: 1.08, costPerConnected: 410, spend: 60130 }
+  },
+  'chk15_cb8': {
+    '7d': { roas: 1.42, costPerConnected: 285, spend: 650 },
+    '14d': { roas: 1.35, costPerConnected: 298, spend: 1200 },
+    '30d': { roas: 1.31, costPerConnected: 310, spend: 1900 },
+    'all': { roas: 1.28, costPerConnected: 325, spend: 2500 }
+  }
+};
+
+// === AWARENESS PRESETS (keyed by batch size, then preset name) ===
+const AWARENESS_PRESETS = {
+  'default': { 1: {mostAware:1, productAware:0, solutionAware:0, problemAware:0, unaware:0}, 2: {mostAware:1, productAware:1, solutionAware:0, problemAware:0, unaware:0}, 3: {mostAware:1, productAware:1, solutionAware:1, problemAware:0, unaware:0}, 4: {mostAware:2, productAware:1, solutionAware:1, problemAware:0, unaware:0}, 5: {mostAware:2, productAware:1, solutionAware:1, problemAware:1, unaware:0} },
+  'warm':    { 1: {mostAware:1, productAware:0, solutionAware:0, problemAware:0, unaware:0}, 2: {mostAware:1, productAware:1, solutionAware:0, problemAware:0, unaware:0}, 3: {mostAware:2, productAware:1, solutionAware:0, problemAware:0, unaware:0}, 4: {mostAware:2, productAware:1, solutionAware:1, problemAware:0, unaware:0}, 5: {mostAware:3, productAware:1, solutionAware:1, problemAware:0, unaware:0} },
+  'cold':    { 1: {mostAware:0, productAware:0, solutionAware:0, problemAware:1, unaware:0}, 2: {mostAware:0, productAware:1, solutionAware:0, problemAware:1, unaware:0}, 3: {mostAware:0, productAware:1, solutionAware:1, problemAware:1, unaware:0}, 4: {mostAware:1, productAware:1, solutionAware:1, problemAware:1, unaware:0}, 5: {mostAware:1, productAware:1, solutionAware:1, problemAware:1, unaware:1} },
+  'balanced':{ 1: {mostAware:0, productAware:0, solutionAware:1, problemAware:0, unaware:0}, 2: {mostAware:1, productAware:0, solutionAware:0, problemAware:1, unaware:0}, 3: {mostAware:1, productAware:1, solutionAware:1, problemAware:0, unaware:0}, 4: {mostAware:1, productAware:1, solutionAware:1, problemAware:1, unaware:0}, 5: {mostAware:1, productAware:1, solutionAware:1, problemAware:1, unaware:1} }
+};
+
+// === DEFAULT VALUES ===
+const DEFAULTS = {
+  copywriter: 'Nate',
+  landingPage: 'https://go.valueaddedmoving.com/long-distance-a',
+  brandAssets: 'https://drive.google.com/drive/u/0/folders/1SE4hFmXUkaPAULZRQvvkYwsc9kXJGPtJ',
+  avatar: 'Individuals and families planning a cross-country move, primarily 2-4+ bedroom households',
+  brandVoiceStatic: 'Direct, confident, savings-focused — like a friend who found a deal and is sharing it',
+  brandVoiceVideo: 'Authentic, relieved, genuine surprise — like telling a friend about a great experience',
+  ratioFormat: ['1:1', '9:16'],
+  adPlatform: 'Meta'
+};
+
+// === SELECTION STATE ===
+let selectedIterationAds = new Set();
+let selectedVisualStyles = new Set();
+let selectedCopyAngles = new Set();
+let selectedHookTypes = new Set();
+let activeMetric = 'roas';
+let activeTimeFrame = 'all';
+let batchSize = 5;
+let activeAwarenessPreset = 'default';
+let awarenessCounts = { mostAware: 2, productAware: 1, solutionAware: 1, problemAware: 1, unaware: 0 };
+
+const AWARENESS_LABELS = {
+  mostAware: 'Most Aware',
+  productAware: 'Product Aware',
+  solutionAware: 'Solution Aware',
+  problemAware: 'Problem Aware',
+  unaware: 'Unaware'
+};
+
+function setBatchSize(btn) {
+  batchSize = parseInt(btn.dataset.size);
+  document.querySelectorAll('#batchSizePills button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('batchSizeLabel').textContent = batchSize;
+  // Re-apply current preset if not custom
+  if (activeAwarenessPreset !== 'custom') {
+    applyAwarenessPreset(activeAwarenessPreset);
+  }
+  updateAwarenessTotal();
+}
+
+function setAwarenessPreset(btn) {
+  activeAwarenessPreset = btn.dataset.preset;
+  document.querySelectorAll('.awareness-presets button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (activeAwarenessPreset !== 'custom') {
+    applyAwarenessPreset(activeAwarenessPreset);
+  }
+}
+
+function applyAwarenessPreset(preset) {
+  // Handle single-level presets (all batch to one awareness level)
+  const singleLevelMap = {
+    allMostAware: 'mostAware',
+    allProductAware: 'productAware',
+    allSolutionAware: 'solutionAware',
+    allProblemAware: 'problemAware',
+    allUnaware: 'unaware'
+  };
+  if (singleLevelMap[preset]) {
+    awarenessCounts = { mostAware: 0, productAware: 0, solutionAware: 0, problemAware: 0, unaware: 0 };
+    awarenessCounts[singleLevelMap[preset]] = batchSize;
+    Object.keys(awarenessCounts).forEach(level => {
+      document.getElementById('count_' + level).textContent = awarenessCounts[level];
+    });
+    updateAwarenessTotal();
+    return;
+  }
+  const presetData = AWARENESS_PRESETS[preset];
+  if (!presetData) return;
+  const counts = presetData[batchSize] || presetData[5];
+  awarenessCounts = { ...counts };
+  Object.keys(awarenessCounts).forEach(level => {
+    document.getElementById('count_' + level).textContent = awarenessCounts[level];
+  });
+  updateAwarenessTotal();
+}
+
+function stepAwareness(level, delta) {
+  const newVal = (awarenessCounts[level] || 0) + delta;
+  if (newVal < 0) return;
+  awarenessCounts[level] = newVal;
+  document.getElementById('count_' + level).textContent = newVal;
+  // Switch to Custom preset since user manually changed
+  activeAwarenessPreset = 'custom';
+  document.querySelectorAll('.awareness-presets button').forEach(b => b.classList.remove('active'));
+  document.querySelector('.awareness-presets button[data-preset="custom"]').classList.add('active');
+  updateAwarenessTotal();
+}
+
+function updateAwarenessTotal() {
+  const total = Object.values(awarenessCounts).reduce((a, b) => a + b, 0);
+  const el = document.getElementById('awarenessTotal');
+  el.textContent = total;
+  el.classList.remove('over', 'match');
+  if (total === batchSize) {
+    el.classList.add('match');
+  } else {
+    el.classList.add('over');
+  }
+}
+
+function getAwarenessString() {
+  const parts = [];
+  Object.entries(awarenessCounts).forEach(([key, count]) => {
+    if (count > 0) {
+      parts.push(`${count} ${AWARENESS_LABELS[key]}`);
+    }
+  });
+  return parts.length > 0 ? parts.join(', ') : 'Not specified';
+}
+
+function setMetricFilter(btn) {
+  activeMetric = btn.dataset.metric;
+  document.querySelectorAll('#metricToggle button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const type = getRadio('batchType');
+  renderIterationCards(type);
+}
+
+function setTimeFrameFilter(btn) {
+  activeTimeFrame = btn.dataset.tf;
+  document.querySelectorAll('#timeFrameToggle button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const type = getRadio('batchType');
+  renderIterationCards(type);
+}
+
+// === INITIALIZATION ===
+document.addEventListener('DOMContentLoaded', () => {
+  // Load ALL saved values from localStorage
+  const saved = JSON.parse(localStorage.getItem('vam_dashboard') || '{}');
+  const fields = ['copywriter', 'landingPage', 'brandAssets', 'avatar', 'brandVoiceStatic', 'brandVoiceVideo', 'adPlatform'];
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && saved[id] !== undefined && saved[id] !== '') {
+      el.value = saved[id];
+    }
+  });
+  // Load saved ratio format chips
+  if (saved.ratioFormat && Array.isArray(saved.ratioFormat)) {
+    setSelectedRatios(saved.ratioFormat);
+  }
+
+  // Show/hide saved badge
+  updateSavedBadge();
+
+  // Set up batch type AND mode switching
+  document.querySelectorAll('input[name="batchType"]').forEach(radio => {
+    radio.addEventListener('change', updateFormState);
+  });
+  document.querySelectorAll('input[name="netNew"]').forEach(radio => {
+    radio.addEventListener('change', updateFormState);
+  });
+
+  // Auto-save defaults on blur (any input change)
+  document.querySelectorAll('#landingPage, #brandAssets, #avatar, #brandVoiceStatic, #brandVoiceVideo, #copywriter, #adPlatform').forEach(el => {
+    el.addEventListener('blur', saveAllDefaults);
+    el.addEventListener('change', saveAllDefaults);
+  });
+
+  updateFormState();
+});
+
+function toggleDefaults() {
+  const body = document.getElementById('defaultsBody');
+  const arrow = document.getElementById('defaultsArrow');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+
+function saveAllDefaults() {
+  const data = {};
+  ['copywriter', 'landingPage', 'brandAssets', 'avatar', 'brandVoiceStatic', 'brandVoiceVideo', 'adPlatform'].forEach(id => {
+    data[id] = getVal(id);
+  });
+  data.ratioFormat = getSelectedRatios();
+  localStorage.setItem('vam_dashboard', JSON.stringify(data));
+  updateSavedBadge();
+}
+
+function updateSavedBadge() {
+  const saved = JSON.parse(localStorage.getItem('vam_dashboard') || '{}');
+  const badge = document.getElementById('savedBadge');
+  if (badge) {
+    badge.style.display = (saved.landingPage || saved.brandAssets) ? 'inline-block' : 'none';
+  }
+}
+
+function toggleRatioChip(btn) {
+  btn.classList.toggle('selected');
+  saveAllDefaults();
+}
+
+function getSelectedRatios() {
+  const chips = document.querySelectorAll('#ratioFormatChips button.selected');
+  return Array.from(chips).map(c => c.dataset.value);
+}
+
+function setSelectedRatios(ratios) {
+  document.querySelectorAll('#ratioFormatChips button').forEach(btn => {
+    btn.classList.toggle('selected', ratios.includes(btn.dataset.value));
+  });
+}
+
+function resetDefaults() {
+  Object.entries(DEFAULTS).forEach(([id, val]) => {
+    if (id === 'ratioFormat') {
+      setSelectedRatios(val);
+      return;
+    }
+    const el = document.getElementById(id);
+    if (el) el.value = val;
+  });
+  localStorage.removeItem('vam_dashboard');
+  updateSavedBadge();
+}
+
+function updateFormState() {
+  const type = getRadio('batchType');
+  const mode = getRadio('netNew');
+  const isIteration = mode === 'Iteration';
+  const isNetNew = mode === 'Net New';
+
+  // Clear all selections when switching
+  selectedIterationAds.clear();
+  selectedVisualStyles.clear();
+  selectedCopyAngles.clear();
+  selectedHookTypes.clear();
+
+  // --- Iteration section ---
+  document.getElementById('iterationSection').classList.toggle('visible', isIteration);
+  if (isIteration) renderIterationCards(type);
+
+  // --- Net New section ---
+  document.getElementById('netNewSection').classList.toggle('visible', isNetNew);
+  if (isNetNew) renderNetNewOptions(type);
+
+  // --- Static fields: show for static ---
+  document.getElementById('staticFields').classList.toggle('visible', type === 'static');
+
+  // --- Video fields: show for video regardless of mode ---
+  document.getElementById('videoFields').classList.toggle('visible', type === 'video');
+
+  // --- Copy fields: show for copy, but hide holdConstant in Net New mode ---
+  document.getElementById('copyFields').classList.toggle('visible', type === 'copy');
+  const holdField = document.getElementById('holdConstant');
+  if (holdField) {
+    holdField.closest('.field').style.display = (type === 'copy' && isIteration) ? 'block' : 'none';
+  }
+
+  // --- Update focus suggestions ---
+  const container = document.getElementById('focusSuggestions');
+  container.innerHTML = '';
+  (FOCUS_SUGGESTIONS[type] || []).forEach(text => {
+    const btn = document.createElement('button');
+    btn.textContent = text;
+    btn.onclick = () => { document.getElementById('batchFocus').value = text; };
+    container.appendChild(btn);
+  });
+}
+
+// === RENDER: ITERATION CARDS ===
+function renderIterationCards(type) {
+  const container = document.getElementById('iterationCardList');
+  container.innerHTML = '';
+  const ads = TOP_PERFORMERS[type] || [];
+  const tf = activeTimeFrame;
+  const metric = activeMetric;
+
+  // Sort by active metric using timeframe-specific data
+  const sorted = ads.slice().sort((a, b) => {
+    const ma = (TIMEFRAME_METRICS[a.id] && TIMEFRAME_METRICS[a.id][tf]) || {};
+    const mb = (TIMEFRAME_METRICS[b.id] && TIMEFRAME_METRICS[b.id][tf]) || {};
+    if (metric === 'costPerConnected') {
+      return (ma.costPerConnected || 999) - (mb.costPerConnected || 999);
+    }
+    return (mb.roas || 0) - (ma.roas || 0);
+  });
+
+  sorted.forEach(ad => {
+    const m = (TIMEFRAME_METRICS[ad.id] && TIMEFRAME_METRICS[ad.id][tf]) || {};
+    const card = document.createElement('div');
+    card.className = 'ad-card';
+    if (selectedIterationAds.has(ad.id)) card.classList.add('selected');
+    card.dataset.adId = ad.id;
+    card.onclick = function() { toggleAdSelection(this); };
+
+    const tierClass = ad.tier === 'winner' ? 'winner' : ad.tier === 'emerging' ? 'emerging' : 'on-fence';
+
+    let badgeHTML;
+    if (metric === 'costPerConnected') {
+      const cpc = m.costPerConnected || 0;
+      const badgeClass = cpc <= 250 ? 'high' : cpc <= 350 ? 'mid' : 'emerging';
+      badgeHTML = `<div class="roas-badge ${badgeClass}">$${cpc} / conn</div>`;
+    } else {
+      const roas = m.roas || 0;
+      const badgeClass = roas >= 1.5 ? 'high' : ad.tier === 'emerging' ? 'emerging' : 'mid';
+      badgeHTML = `<div class="roas-badge ${badgeClass}">${roas}x ROAS</div>`;
+    }
+
+    const tfLabel = tf === 'all' ? '' : ` (${tf})`;
+    card.innerHTML = `
+      <div class="ad-info">
+        <div class="ad-name">${ad.name} <span class="tier-label ${tierClass}">${ad.tier}</span></div>
+        <div class="ad-meta">${ad.angle} &mdash; ${ad.description}</div>
+      </div>
+      <div class="ad-stats">
+        ${badgeHTML}
+        <div class="spend-label">$${formatSpend(m.spend || 0)} spend${tfLabel}</div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  // Render iteration direction suggestions
+  const sugContainer = document.getElementById('iterationSuggestions');
+  sugContainer.innerHTML = '';
+  ITERATION_SUGGESTIONS.forEach(text => {
+    const btn = document.createElement('button');
+    btn.textContent = text;
+    btn.onclick = () => { document.getElementById('iterationDirection').value = text; };
+    sugContainer.appendChild(btn);
+  });
+
+  updateSelectionCount();
+}
+
+function toggleAdSelection(el) {
+  const id = el.dataset.adId;
+  if (selectedIterationAds.has(id)) {
+    selectedIterationAds.delete(id);
+    el.classList.remove('selected');
+  } else {
+    if (selectedIterationAds.size >= 3) return;
+    selectedIterationAds.add(id);
+    el.classList.add('selected');
+  }
+  updateSelectionCount();
+}
+
+function updateSelectionCount() {
+  const el = document.getElementById('selectionCount');
+  const count = selectedIterationAds.size;
+  if (count === 0) {
+    el.innerHTML = 'Pick <span>1-3</span> proven winners to create variations of';
+  } else {
+    el.innerHTML = `<span>${count}</span> of 3 selected`;
+  }
+}
+
+// === RENDER: NET NEW OPTIONS ===
+function renderNetNewOptions(type) {
+  // --- Visual Styles ---
+  const visualField = document.getElementById('netNewVisualField');
+  const visualContainer = document.getElementById('netNewVisualOptions');
+  visualContainer.innerHTML = '';
+  selectedVisualStyles.clear();
+
+  if (type === 'copy') {
+    visualField.style.display = 'none';
+  } else {
+    visualField.style.display = 'block';
+    const styles = NET_NEW_OPTIONS.visualStyles[type] || [];
+    styles.forEach(style => {
+      const opt = document.createElement('div');
+      opt.className = 'guided-option';
+      opt.dataset.value = style.value;
+      opt.onclick = function() { toggleGuidedOption(this, selectedVisualStyles, 'customVisualField'); };
+
+      const tierClass = style.tier === 'proven' ? 'winner' : style.tier === 'emerging' ? 'emerging' : 'on-fence';
+      opt.innerHTML = `
+        <div class="option-left">
+          <span>${style.label}</span>
+          ${style.tier !== 'custom' ? `<span class="tier-label ${tierClass}">${style.tier}</span>` : ''}
+        </div>
+        <span class="option-note">${style.note}</span>
+      `;
+      visualContainer.appendChild(opt);
+    });
+  }
+
+  // Hide custom input
+  document.getElementById('customVisualField').classList.remove('visible');
+  document.getElementById('customAngleField').classList.remove('visible');
+
+  // --- Copy Angles ---
+  const angleContainer = document.getElementById('netNewAngleChips');
+  angleContainer.innerHTML = '';
+  selectedCopyAngles.clear();
+
+  NET_NEW_OPTIONS.copyAngles.forEach(angle => {
+    const btn = document.createElement('button');
+    btn.textContent = angle.label;
+    btn.dataset.value = angle.value;
+    btn.title = angle.note;
+    btn.onclick = function() { toggleChip(this, selectedCopyAngles, 'customAngleField'); };
+    angleContainer.appendChild(btn);
+  });
+
+  // --- Hook Types ---
+  const hookContainer = document.getElementById('netNewHookChips');
+  hookContainer.innerHTML = '';
+  selectedHookTypes.clear();
+
+  NET_NEW_OPTIONS.hookTypes.forEach(hook => {
+    const opt = document.createElement('div');
+    opt.className = 'guided-option';
+    opt.dataset.value = hook.value;
+    opt.onclick = function() { toggleGuidedOption(this, selectedHookTypes); };
+    opt.innerHTML = `
+      <div class="option-left" style="flex-direction: column; align-items: flex-start; gap: 2px;">
+        <span style="font-weight: 600;">${hook.label}</span>
+        <span class="option-note">${hook.example}</span>
+      </div>
+    `;
+    hookContainer.appendChild(opt);
+  });
+}
+
+function toggleGuidedOption(el, set, customFieldId) {
+  const val = el.dataset.value;
+  if (val === 'custom') {
+    el.classList.toggle('selected');
+    if (customFieldId) {
+      document.getElementById(customFieldId).classList.toggle('visible', el.classList.contains('selected'));
+    }
+    if (el.classList.contains('selected')) set.add(val); else set.delete(val);
+    return;
+  }
+  if (set.has(val)) {
+    set.delete(val);
+    el.classList.remove('selected');
+  } else {
+    set.add(val);
+    el.classList.add('selected');
+  }
+}
+
+function toggleChip(el, set, customFieldId) {
+  const val = el.dataset.value;
+  if (val === 'custom' || val === '+ Custom Angle') {
+    el.classList.toggle('selected');
+    if (customFieldId) {
+      document.getElementById(customFieldId).classList.toggle('visible', el.classList.contains('selected'));
+    }
+    if (el.classList.contains('selected')) set.add(val); else set.delete(val);
+    return;
+  }
+  if (set.has(val)) {
+    set.delete(val);
+    el.classList.remove('selected');
+  } else {
+    set.add(val);
+    el.classList.add('selected');
+  }
+}
+
+function formatSpend(num) {
+  if (num >= 1000) return Math.round(num / 1000) + 'K';
+  return num.toString();
+}
+
+function getVal(id) {
+  return document.getElementById(id)?.value?.trim() || '';
+}
+
+function getRadio(name) {
+  return document.querySelector(`input[name="${name}"]:checked`)?.value || '';
+}
+
+function getCheckedValues(containerId) {
+  const checks = document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`);
+  return Array.from(checks).map(c => c.value);
+}
+
+function generatePrompt() {
+  const type = getRadio('batchType');
+  const mode = getRadio('netNew');
+  const isIteration = mode === 'Iteration';
+  const copywriter = getVal('copywriter') || 'Nate';
+  const focus = getVal('batchFocus') || '[Not specified — use your best judgment based on performance data]';
+  const awareness = getAwarenessString();
+  const landingPage = getVal('landingPage') || DEFAULTS.landingPage;
+  const brandAssets = getVal('brandAssets') || '[INSERT]';
+  const avatar = getVal('avatar') || DEFAULTS.avatar;
+  const brandVoiceStatic = getVal('brandVoiceStatic') || DEFAULTS.brandVoiceStatic;
+  const brandVoiceVideo = getVal('brandVoiceVideo') || DEFAULTS.brandVoiceVideo;
+  const selectedRatios = getSelectedRatios();
+  const ratioFormat = selectedRatios.length > 0 ? selectedRatios.join(', ') : DEFAULTS.ratioFormat.join(', ');
+  const adPlatform = getVal('adPlatform') || DEFAULTS.adPlatform;
+  const notes = getVal('notes');
+
+  // Save all defaults to localStorage
+  saveAllDefaults();
+
+  // Build additional notes line
+  let notesLine = notes ? `\n- **Additional Notes:** ${notes}` : '';
+
+  // Build iteration targets OR creative direction
+  if (isIteration) {
+    const ads = TOP_PERFORMERS[type] || [];
+    const selected = ads.filter(ad => selectedIterationAds.has(ad.id));
+    if (selected.length > 0) {
+      const tf = activeTimeFrame;
+      const metric = activeMetric;
+      const tfLabel = tf === 'all' ? 'All Time' : `Last ${tf}`;
+      const metricLabel = metric === 'costPerConnected' ? 'Cost per Connected Call' : 'ROAS';
+      notesLine += `\n\n### ITERATION TARGETS\nOptimizing for: **${metricLabel}** | Time Frame: **${tfLabel}**\nCreate variations of these specific proven winners:\n`;
+      selected.forEach((ad, i) => {
+        const m = (TIMEFRAME_METRICS[ad.id] && TIMEFRAME_METRICS[ad.id][tf]) || {};
+        const metricStr = metric === 'costPerConnected'
+          ? `$${m.costPerConnected || '?'} cost/connected`
+          : `${m.roas || '?'}x ROAS`;
+        notesLine += `\n${i + 1}. **${ad.name}** (${metricStr}, $${formatSpend(m.spend || 0)} spend in ${tfLabel})`;
+        notesLine += `\n   - Angle: ${ad.angle}`;
+        notesLine += `\n   - ${ad.description}`;
+      });
+      const dir = getVal('iterationDirection');
+      if (dir) {
+        notesLine += `\n\n**Iteration Direction:** ${dir}`;
+        notesLine += `\nFocus the variations on: ${dir}. Keep the core winning elements but modify the specified dimension.`;
+      }
+    }
+  } else {
+    // Net New mode — build creative direction
+    const visuals = Array.from(selectedVisualStyles).filter(v => v !== 'custom');
+    const angles = Array.from(selectedCopyAngles).filter(v => v !== 'custom' && v !== '+ Custom Angle');
+    const hooks = Array.from(selectedHookTypes);
+    const customVis = getVal('customVisualInput');
+    const customAng = getVal('customAngleInput');
+
+    if (visuals.length > 0 || angles.length > 0 || hooks.length > 0 || customVis || customAng) {
+      notesLine += '\n\n### CREATIVE DIRECTION (Net New)\n';
+      if (visuals.length > 0) {
+        notesLine += `**Visual Styles to Explore:** ${visuals.join(', ')}\n`;
+      }
+      if (customVis) {
+        notesLine += `**Custom Visual Direction:** ${customVis}\n`;
+      }
+      if (angles.length > 0) {
+        notesLine += `**Copy Angles to Explore:** ${angles.join(', ')}\n`;
+      }
+      if (customAng) {
+        notesLine += `**Custom Angle Direction:** ${customAng}\n`;
+      }
+      if (hooks.length > 0 && !hooks.includes('Let Claude decide')) {
+        notesLine += `**Hook Type Emphasis:** ${hooks.join(', ')}\n`;
+      }
+      notesLine += `\nThese are exploratory directions \u2014 you are NOT limited to proven winners. Push into new territory while using the data as inspiration.`;
+    }
+  }
+
+  // Get selected variation type per batch type
+  let variationType = '';
+  if (type === 'static') {
+    variationType = document.querySelector('input[name="staticVarType"]:checked')?.value || 'Copy';
+  } else if (type === 'video') {
+    variationType = document.querySelector('input[name="videoVarType"]:checked')?.value || 'Lead';
+  } else {
+    variationType = document.querySelector('input[name="copyVarType"]:checked')?.value || 'Lead';
+  }
+
+  // Get Static Format and Copy Type
+  const staticFormat = document.querySelector('input[name="staticFormat"]:checked')?.value || 'Single Static';
+  const copyType = document.querySelector('input[name="copyType"]:checked')?.value || 'Primary Text';
+
+  // Pick the right generator template
+  let generator = '';
+  if (type === 'static') {
+    // Visual style is chosen by AI based on performance data — held constant across all creatives
+    let visualStr;
+    if (isIteration) {
+      const selected = (TOP_PERFORMERS.static || []).filter(ad => selectedIterationAds.has(ad.id));
+      const uniqueVisuals = [...new Set(selected.map(ad => ad.visual))];
+      visualStr = uniqueVisuals.length > 0 ? uniqueVisuals[0] + ' (held constant — from iteration target)' : 'Choose the best-performing visual style from the data and hold it constant across all creatives';
+    } else {
+      visualStr = 'Choose the best visual style based on performance data (held constant across all creatives)';
+    }
+    generator = STATIC_GENERATOR.replace(/\{\{VISUALS\}\}/g, visualStr);
+  } else if (type === 'video') {
+    generator = VIDEO_GENERATOR;
+  } else {
+    const holdConstant = isIteration ? (getVal('holdConstant') || 'None \u2014 all new') : 'None \u2014 all new (Net New batch)';
+    generator = COPY_GENERATOR
+      .replace(/\{\{HOLD_CONSTANT\}\}/g, holdConstant);
+  }
+
+  // Replace common placeholders
+  generator = generator
+    .replace(/\{\{BATCH_FOCUS\}\}/g, focus)
+    .replace(/\{\{AWARENESS\}\}/g, awareness)
+    .replace(/\{\{NET_NEW\}\}/g, mode)
+    .replace(/\{\{LANDING_PAGE\}\}/g, landingPage)
+    .replace(/\{\{BRAND_ASSETS\}\}/g, brandAssets)
+    .replace(/\{\{COPYWRITER\}\}/g, copywriter)
+    .replace(/\{\{AVATAR\}\}/g, avatar)
+    .replace(/\{\{BRAND_VOICE_STATIC\}\}/g, brandVoiceStatic)
+    .replace(/\{\{BRAND_VOICE_VIDEO\}\}/g, brandVoiceVideo)
+    .replace(/\{\{BATCH_SIZE\}\}/g, batchSize.toString())
+    .replace(/\{\{VARIATION_TYPE\}\}/g, variationType)
+    .replace(/\{\{RATIO_FORMAT\}\}/g, ratioFormat)
+    .replace(/\{\{AD_PLATFORM\}\}/g, adPlatform)
+    .replace(/\{\{STATIC_FORMAT\}\}/g, staticFormat)
+    .replace(/\{\{COPY_TYPE\}\}/g, copyType)
+    .replace(/\{\{ADDITIONAL_NOTES\}\}/g, notesLine);
+
+  // Assemble full prompt with clear instruction framing
+  const instructionPrefix = `IMPORTANT: Everything between the === START CONTEXT === and === END CONTEXT === markers below is your REFERENCE DATA. Do NOT output or summarize this context. Use it silently to inform the briefs you generate.
+
+=== START CONTEXT ===`;
+
+  // Batch-type-specific validation template values
+  const batchTypeLabel = type === 'static' ? 'Static' : type === 'video' ? 'Video' : 'Body Copy';
+  const variationTypeValues = type === 'static' ? 'Copy | Visual' : type === 'video' ? 'Lead | Pattern Interrupt | Graphic Overlay | Body | CTA' : 'Lead | Body | CTA | Full';
+  const variationTypeList = type === 'static' ? 'Copy, Visual' : type === 'video' ? 'Lead, Pattern Interrupt, Graphic Overlay, Body, CTA' : 'Lead, Body, CTA, Full';
+  const creativeNameExample = type === 'static'
+    ? 'Copy var = "Angle Name - Lead Type Lead", Visual var = "Angle Name - Visual Style"'
+    : type === 'video'
+    ? '"Angle Name - Lead Type VariationType" e.g., "Done For You - Problem-Solution Lead"'
+    : 'Lead/Body/CTA: "Angle Name - Lead Type VariationType", Full: "Angle Name - Lead Type", Asset Set: "Angle Name - Asset Set"';
+  const creativeIdSuffix = type === 'static' ? 'CID' : type === 'video' ? 'VID' : 'CPID';
+  const itemLabel = type === 'copy' ? 'COPY' : type === 'video' ? 'VIDEO' : 'CREATIVE';
+
+  const instructionBridge = `=== END CONTEXT ===
+
+=== TASK: GENERATE THE BRIEFS BELOW ===
+Using all the context above as your reference data, execute the following generator instructions.
+
+OUTPUT FORMAT — PLAIN TEXT ONLY. Do NOT create a document, artifact, or use any special formatting. Just output plain text directly in the chat. No code blocks. No markdown tables. No document skill. No bold, no headers, no colors. PLAIN TEXT in this exact structure:
+
+BATCH: [Batch Name Here]
+Batch Type: ${batchTypeLabel}
+Date: [Date]
+
+=== OVERVIEW ===
+[Follow the overview structure from the generator template below]
+
+=== ${itemLabel} 1 ===
+Creative Name: [filled value - use Creative Tracker formula: ${creativeNameExample}] (tracker adds # and ${creativeIdSuffix})
+Notes: [filled value]
+Variation Type: [MUST be one of: ${variationTypeList}]
+Awareness Level: [MUST be one of: Most Aware, Product Aware, Solution Aware, Problem Aware, Unaware]
+Lead Type: [MUST be one of: Offer, Promise, Problem-Solution, Secret, Proclamation, Story]
+Status: Ready For Internal
+[remaining fields per generator template]
+
+=== ${itemLabel} 2 ===
+[same structure...]
+
+...repeat for all creatives in the batch...
+
+IMPORTANT RULES:
+- Output PLAIN TEXT in the chat. Do NOT use a document/artifact.
+- Use === OVERVIEW === and === ${itemLabel} N === as section headers
+- Each field on its own line as "Field Name: value"
+- Multi-line fields (Copy, Body Copy, Notes) can span multiple lines after the field name
+- Dropdown fields MUST use ONLY these exact values:
+  * Variation Type: ${variationTypeValues}
+  * Awareness Level: Most Aware | Product Aware | Solution Aware | Problem Aware | Unaware
+  * Lead Type: Offer | Promise | Problem-Solution | Secret | Proclamation | Story
+  * Status: Ready For Internal
+  * AI Allowed?: Yes, AI Is Allowed
+  * Ad Platform: All | Meta | Google | N/A
+  * Net New/Iteration: Net New | Iteration
+- Fill in EVERY field with actual creative brief content. No placeholders.`;
+
+  const fullPrompt = [
+    instructionPrefix,
+    '',
+    MASTER_PROMPT,
+    '',
+    instructionBridge,
+    '',
+    generator
+  ].join('\n');
+
+  // Display output
+  const outputArea = document.getElementById('outputArea');
+  outputArea.value = fullPrompt;
+
+  const charCount = document.getElementById('charCount');
+  charCount.textContent = `${fullPrompt.length.toLocaleString()} characters`;
+
+  document.getElementById('outputSection').classList.add('visible');
+
+  // Reset copy button
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.textContent = 'Copy to Clipboard';
+  copyBtn.classList.remove('copied');
+
+  // Scroll to output
+  document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function copyToClipboard() {
+  const text = document.getElementById('outputArea').value;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy to Clipboard';
+      btn.classList.remove('copied');
+    }, 2000);
+
+    // Show next-step hint
+    const hint = document.getElementById('nextStepHint');
+    if (currentMode === 'ideation') {
+      hint.innerHTML = `<strong style="color: var(--accent);">Next step:</strong> Open <a href="https://claude.ai" target="_blank" style="color: var(--accent); text-decoration: underline;">claude.ai</a> and start a new conversation with <strong style="color: #fff;">Opus 4.6</strong> (required for consistent output). Paste this prompt. Claude will pitch concepts and guide you through choices (just pick A, B, C...). After 1-2 quick picks, Claude writes the final briefs. Copy that output and switch to the <strong>Production</strong> tab to export.`;
+    } else {
+      hint.innerHTML = `<strong style="color: var(--accent);">Next step:</strong> Open <a href="https://claude.ai" target="_blank" style="color: var(--accent); text-decoration: underline;">claude.ai</a> and start a new conversation with <strong style="color: #fff;">Opus 4.6</strong> (required for consistent output). Paste this prompt. Claude will output 5 formatted briefs. Copy that entire output and switch to the <strong>Production</strong> tab to export.`;
+    }
+    hint.style.display = 'block';
+  });
+}
+
+// === DATA SOURCE (Google Sheets Integration) ===
+
+function toggleDataSource() {
+  const body = document.getElementById('dataSourceBody');
+  const arrow = document.getElementById('dataSourceArrow');
+  if (body.style.display === 'none') {
+    body.style.display = 'block';
+    arrow.innerHTML = '&#9650;';
+  } else {
+    body.style.display = 'none';
+    arrow.innerHTML = '&#9660;';
+  }
+}
+
+async function saveAndFetchSheets() {
+  const creativeId = document.getElementById('sheetCreativeId').value.trim();
+  const dashboardId = document.getElementById('sheetDashboardId').value.trim();
+  const msg = document.getElementById('sheetSaveMsg');
+
+  if (!creativeId || !dashboardId) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = 'Both Sheet IDs are required.';
+    msg.style.display = 'inline';
+    return;
+  }
+
+  msg.style.color = 'var(--text-dim)';
+  msg.textContent = 'Saving & fetching data...';
+  msg.style.display = 'inline';
+
+  try {
+    const resp = await fetch('/api/sheets-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        creative_tracking_id: creativeId,
+        meta_dashboard_id: dashboardId,
+      }),
+    });
+    const data = await resp.json();
+    if (data.error) {
+      msg.style.color = 'var(--red)';
+      msg.textContent = data.error;
+      return;
+    }
+
+    // Save to localStorage for persistence
+    localStorage.setItem('vam_sheet_creative_id', creativeId);
+    localStorage.setItem('vam_sheet_dashboard_id', dashboardId);
+
+    msg.style.color = 'var(--green)';
+    msg.textContent = 'Saved! Fetching live data...';
+
+    // Now load the data
+    await loadPerformanceData();
+
+    msg.textContent = 'Connected! Data loaded successfully.';
+    setTimeout(() => { msg.style.display = 'none'; }, 3000);
+  } catch (e) {
+    msg.style.color = 'var(--red)';
+    msg.textContent = 'Error: ' + e.message;
+  }
+}
+
+async function loadPerformanceData() {
+  try {
+    const resp = await fetch('/api/performance-data');
+    const data = await resp.json();
+
+    if (!data.configured) {
+      updateDataStatus('not-configured');
+      return;
+    }
+
+    if (data.error) {
+      updateDataStatus('error', data.error);
+      return;
+    }
+
+    // Replace performance section in MASTER_PROMPT
+    if (data.prompt_section) {
+      const startMarker = '## CURRENT PERFORMANCE';
+      const endMarker = '## FRAMEWORKS';
+      const startIdx = MASTER_PROMPT.indexOf(startMarker);
+      const endIdx = MASTER_PROMPT.indexOf(endMarker);
+      if (startIdx !== -1 && endIdx !== -1) {
+        MASTER_PROMPT = MASTER_PROMPT.substring(0, startIdx)
+          + data.prompt_section + '\n\n'
+          + MASTER_PROMPT.substring(endIdx);
+      }
+    }
+
+    // Update TOP_PERFORMERS
+    if (data.top_performers) {
+      if (data.top_performers.static && data.top_performers.static.length > 0) {
+        TOP_PERFORMERS.static = data.top_performers.static;
+      }
+      if (data.top_performers.video && data.top_performers.video.length > 0) {
+        TOP_PERFORMERS.video = data.top_performers.video;
+      }
+      if (data.top_performers.copy && data.top_performers.copy.length > 0) {
+        TOP_PERFORMERS.copy = data.top_performers.copy;
+      }
+    }
+
+    // Update NET_NEW_OPTIONS
+    if (data.net_new_options) {
+      if (data.net_new_options.visualStyles) {
+        if (data.net_new_options.visualStyles.static && data.net_new_options.visualStyles.static.length > 0) {
+          NET_NEW_OPTIONS.visualStyles.static = data.net_new_options.visualStyles.static;
+        }
+        if (data.net_new_options.visualStyles.video && data.net_new_options.visualStyles.video.length > 0) {
+          NET_NEW_OPTIONS.visualStyles.video = data.net_new_options.visualStyles.video;
+        }
+      }
+      if (data.net_new_options.copyAngles && data.net_new_options.copyAngles.length > 0) {
+        NET_NEW_OPTIONS.copyAngles = data.net_new_options.copyAngles;
+      }
+    }
+
+    // Re-render UI chips if the form is already initialized
+    if (typeof renderNetNewChips === 'function') {
+      renderNetNewChips();
+    }
+
+    updateDataStatus('live', data.last_updated);
+
+  } catch (e) {
+    console.warn('[data] Could not load performance data:', e.message);
+    updateDataStatus('offline');
+  }
+}
+
+async function refreshSheetData() {
+  const btn = document.getElementById('dataRefreshBtn');
+  btn.textContent = '↻ Refreshing...';
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch('/api/refresh-data', { method: 'POST' });
+    const data = await resp.json();
+
+    if (data.error) {
+      updateDataStatus('error', data.error);
+      return;
+    }
+
+    if (!data.configured) {
+      updateDataStatus('not-configured');
+      return;
+    }
+
+    // Reload the full data to update prompt + UI
+    await loadPerformanceData();
+  } catch (e) {
+    console.warn('[data] Refresh failed:', e.message);
+    updateDataStatus('offline');
+  } finally {
+    btn.textContent = '↻ Refresh';
+    btn.disabled = false;
+  }
+}
+
+function updateDataStatus(status, detail) {
+  const bar = document.getElementById('dataStatusBar');
+  const dot = document.getElementById('dataStatusDot');
+  const text = document.getElementById('dataStatusText');
+  const badge = document.getElementById('dataSourceBadge');
+  const refreshBtn = document.getElementById('dataRefreshBtn');
+
+  bar.style.display = 'inline-flex';
+
+  switch (status) {
+    case 'live':
+      dot.style.background = 'var(--green)';
+      const ago = detail ? _timeAgo(detail) : 'just now';
+      text.textContent = 'Data: Live · Updated ' + ago;
+      refreshBtn.style.display = 'inline-block';
+      badge.textContent = 'Live';
+      badge.style.background = '#065f46';
+      badge.style.color = '#6ee7b7';
+      break;
+    case 'not-configured':
+      dot.style.background = '#6b7280';
+      text.textContent = 'Data: Not configured';
+      refreshBtn.style.display = 'none';
+      badge.textContent = 'Not configured';
+      badge.style.background = '#374151';
+      badge.style.color = '#9ca3af';
+      break;
+    case 'offline':
+      dot.style.background = 'var(--orange)';
+      text.textContent = 'Data: Using fallback (server unreachable)';
+      refreshBtn.style.display = 'none';
+      badge.textContent = 'Fallback';
+      badge.style.background = '#78350f';
+      badge.style.color = '#fbbf24';
+      break;
+    case 'error':
+      dot.style.background = 'var(--red)';
+      text.textContent = 'Data: Error — ' + (detail || 'unknown');
+      refreshBtn.style.display = 'inline-block';
+      badge.textContent = 'Error';
+      badge.style.background = '#7f1d1d';
+      badge.style.color = '#fca5a5';
+      break;
+  }
+}
+
+function _timeAgo(isoStr) {
+  try {
+    const d = new Date(isoStr);
+    const now = new Date();
+    const diffMs = now - d;
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + ' min ago';
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + 'h ago';
+    return Math.floor(hrs / 24) + 'd ago';
+  } catch (e) {
+    return 'unknown';
+  }
+}
+
+// Load saved Sheet IDs from localStorage on page load
+(function initDataSource() {
+  const savedCreativeId = localStorage.getItem('vam_sheet_creative_id');
+  const savedDashboardId = localStorage.getItem('vam_sheet_dashboard_id');
+  if (savedCreativeId) {
+    document.getElementById('sheetCreativeId').value = savedCreativeId;
+  }
+  if (savedDashboardId) {
+    document.getElementById('sheetDashboardId').value = savedDashboardId;
+  }
+  // Try to load live data on page load
+  loadPerformanceData();
+})();
+
+// === OUTPUT MODE (Ideation vs Production) ===
+
+let currentMode = 'ideation'; // 'ideation' or 'production'
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('tabBtnIdeation').classList.toggle('active', mode === 'ideation');
+  document.getElementById('tabBtnProduction').classList.toggle('active', mode === 'production');
+
+  // Show/hide content areas
+  document.getElementById('ideationContent').style.display = mode === 'ideation' ? '' : 'none';
+  document.getElementById('productionContent').style.display = mode === 'production' ? '' : 'none';
+
+  // Update ideation workflow steps and instructions
+  const stepsEl = document.getElementById('workflowSteps');
+  const instrEl = document.getElementById('workflowInstructions');
+  stepsEl.innerHTML = `
+    <div class="workflow-step"><span class="step-num">1</span><span class="step-label">Form</span></div>
+    <span class="step-arrow">&#x2192;</span>
+    <div class="workflow-step"><span class="step-num">2</span><span class="step-label">Copy prompt</span></div>
+    <span class="step-arrow">&#x2192;</span>
+    <div class="workflow-step"><span class="step-num">3</span><span class="step-label">Discuss in Claude</span></div>
+    <span class="step-arrow">&#x2192;</span>
+    <div class="workflow-step"><span class="step-num">4</span><span class="step-label">Get briefs</span></div>
+    <span class="step-arrow">&#x2192;</span>
+    <div class="workflow-step"><span class="step-num">5</span><span class="step-label">Export</span></div>
+  `;
+  instrEl.innerHTML = `
+    <strong style="color: var(--text); font-size: 13px;">How Ideation mode works:</strong><br>
+    <span style="color: var(--green);">&#10102;</span> Fill out the form below and click <strong>Generate Pitch Prompt</strong>.<br>
+    <span style="color: var(--green);">&#10103;</span> Copy the prompt and paste it into a new <a href="https://claude.ai" target="_blank" style="color: var(--accent);">Claude</a> conversation. <strong style="color: var(--accent);">Use Opus 4.6</strong> for best results.<br>
+    <span style="color: var(--green);">&#10104;</span> Claude will pitch 3-5 creative concepts and ask you to <strong>pick which to keep</strong> (A, B, C...). Just reply with a letter.<br>
+    <span style="color: var(--green);">&#10105;</span> After 1-2 quick choices, Claude writes the final briefs automatically.<br>
+    <span style="color: var(--green);">&#10106;</span> Copy the briefs and switch to <strong>Production</strong> tab to export as .docx.
+  `;
+}
+
+// Initialize workflow steps on load
+switchMode('ideation');
+
+function handleGenerate() {
+  if (currentMode === 'ideation') {
+    generateIdeationFromForm();
+  } else {
+    generatePrompt();
+  }
+}
+
+function generateIdeationFromForm() {
+  // Read the same form fields as generatePrompt()
+  const type = getRadio('batchType');
+  const mode = getRadio('netNew');
+  const isIteration = mode === 'Iteration';
+  const copywriter = getVal('copywriter');
+  const focus = getVal('batchFocus');
+  const notes = getVal('notes');
+
+  const batchTypeLabel = type === 'static' ? 'Static' : type === 'video' ? 'Video' : 'Body Copy';
+
+  // Build the creative direction from form selections (same as production)
+  let directionBlock = '';
+
+  if (isIteration) {
+    // Get selected iteration ads
+    const selectedAds = [];
+    const activeTimeFrame = document.querySelector('.time-pill.active')?.dataset?.value || 'all';
+    for (const id of selectedIterationAds) {
+      const ad = TOP_PERFORMERS[type]?.find(a => a.id === id);
+      if (ad) {
+        const metrics = TIMEFRAME_METRICS[id]?.[activeTimeFrame];
+        const metricStr = metrics
+          ? `ROAS ${metrics.roas}x, $${metrics.costPerConnected} CPC, $${metrics.spend} spend (${activeTimeFrame})`
+          : `ROAS ${ad.roas}x, $${ad.spend} spend (all time)`;
+        selectedAds.push(`- ${ad.name} — ${ad.angle} — ${metricStr}`);
+      }
+    }
+    const iterDir = getVal('iterationDirection');
+    directionBlock = `### Creative Direction (Iteration)
+**Mode:** Iteration — building on proven winners
+${selectedAds.length > 0 ? '**Ads to iterate on:**\n' + selectedAds.join('\n') : ''}
+${iterDir ? '**Direction:** ' + iterDir : ''}`;
+  } else {
+    // Net New — get selected visual styles, copy angles, hook types
+    const visuals = [...selectedVisualStyles].join(', ');
+    const angles = [...selectedCopyAngles].join(', ');
+    const hooks = [...selectedHookTypes].join(', ');
+    const customVis = getVal('customVisualInput');
+    const customAngle = getVal('customAngleInput');
+
+    let parts = [];
+    if (visuals) parts.push(`**Visual Styles:** ${visuals}`);
+    if (customVis) parts.push(`**Custom Visual:** ${customVis}`);
+    if (angles) parts.push(`**Copy Angles:** ${angles}`);
+    if (customAngle) parts.push(`**Custom Angle:** ${customAngle}`);
+    if (hooks) parts.push(`**Hook Types:** ${hooks}`);
+
+    directionBlock = `### Creative Direction (Net New)
+**Mode:** Net New creative concepts
+${parts.join('\n')}`;
+  }
+
+  // Get variation type
+  let variationType = '';
+  if (type === 'static') variationType = getRadio('staticVarType') || 'Copy';
+  else if (type === 'video') variationType = getRadio('videoVarType') || 'Lead';
+  else variationType = getRadio('copyVarType') || 'Lead';
+
+  // Get awareness distribution
+  const awareness = getAwarenessString();
+
+  // Fill the ideation template
+  let generator = IDEATION_GENERATOR
+    .replace(/\{\{BATCH_TYPE\}\}/g, batchTypeLabel)
+    .replace('{{FOCUS}}', focus || 'No specific focus provided — recommend based on performance data')
+    .replace('{{CONSTRAINTS}}', notes ? `- **Additional Notes / Constraints:** ${notes}` : '')
+    .replace('{{CONTEXT}}', directionBlock ? directionBlock : '');
+
+  // Add form context that the ideation template doesn't have placeholders for
+  let formContext = `### Form Selections
+- **Copywriter:** ${copywriter}
+- **Variation Type:** ${variationType}
+- **Awareness Distribution:** ${awareness}
+- **Mode:** ${mode}`;
+
+  generator = generator + '\n\n' + formContext;
+
+  // Build the instruction prefix (same as production)
+  const instructionPrefix = `IMPORTANT: Everything between the === START CONTEXT === and === END CONTEXT === markers below is your REFERENCE DATA. Use it to inform your creative recommendations.
+
+=== START CONTEXT ===`;
+
+  // Assemble full prompt
+  const fullPrompt = [
+    instructionPrefix,
+    '',
+    MASTER_PROMPT,
+    '',
+    '=== END CONTEXT ===',
+    '',
+    '=== TASK: PITCH CREATIVE CONCEPTS ===',
+    '',
+    generator,
+  ].join('\n');
+
+  // Display in the same output area as production
+  const outputArea = document.getElementById('outputArea');
+  const outputSection = document.getElementById('outputSection');
+  const charCount = document.getElementById('charCount');
+
+  outputArea.value = fullPrompt;
+  outputSection.style.display = 'block';
+  charCount.textContent = fullPrompt.length.toLocaleString() + ' chars';
+
+  outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+
+</script>
+</body>
+</html>

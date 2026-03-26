@@ -1,0 +1,29 @@
+# Generated docs (keep the [Active] templates needed by server)
+*.docx
+!\[Active\]*.docx
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local-only files
+.claude/
+Start VAM Dashboard.command
+
+# BAD Marketing SOP (agency-confidential)
+BAD*Marketing*SOP*
+BAD*Marketing*INFO*
+
+# Google Sheets cache/config (generated at runtime)
+.sheets_cache.json
+.sheets_config.json
+
+# Test/scratch files
+TEST_*
