@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """
-Google Sheets Data Pipeline for VAM Dashboard
+Google Sheets Data Pipeline for Creative Batch Generator
 
 Fetches published Google Sheet CSVs, parses ad performance data,
 classifies winners/losers, computes KPIs, and builds the prompt
 performance section + UI data structures.
+
+Supports multiple clients via client_slug parameter for per-client
+config and cache files.
 
 Sheets required (published to web as CSV):
   1. Creative & Copy Tracking Sheet — tabs: Static Ad Performance,
@@ -28,18 +31,38 @@ from datetime import datetime
 # Constants
 # ---------------------------------------------------------------------------
 
-CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                          '.sheets_cache.json')
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                           '.sheets_config.json')
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_TTL = 3600  # 1 hour in seconds
 
-# Business targets (hardcoded — these are strategic constants)
-TARGETS = {
+# Default business targets — can be overridden per-client via client config
+DEFAULT_TARGETS = {
     'roas': 2.0,
     'cost_per_connected': 250,
     'cac': 750,
 }
+
+def _cache_file(client_slug='default'):
+    return os.path.join(SCRIPT_DIR, f'.sheets_cache_{client_slug}.json')
+
+def _config_file(client_slug='default'):
+    return os.path.join(SCRIPT_DIR, f'.sheets_config_{client_slug}.json')
+
+def get_targets(client_slug='default'):
+    """Get business targets for a client. Reads from client config JSON if available."""
+    client_config_path = os.path.join(SCRIPT_DIR, 'clients', f'{client_slug}.json')
+    try:
+        with open(client_config_path) as f:
+            cfg = json.load(f)
+            sheets = cfg.get('sheets', {})
+            targets = sheets.get('targets', {})
+            if targets:
+                return targets
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+    return DEFAULT_TARGETS
+
+# Keep TARGETS as a module-level reference for backward compatibility
+TARGETS = DEFAULT_TARGETS
 
 # Tab names in the Google Sheets
 CREATIVE_TABS = {
@@ -375,15 +398,16 @@ def fetch_sheet_csv(sheet_id, tab_name, timeout=30):
 # Sheet config management
 # ---------------------------------------------------------------------------
 
-def get_sheet_config():
-    """Get Google Sheet IDs from env vars or config file."""
+def get_sheet_config(client_slug='default'):
+    """Get Google Sheet IDs from env vars or per-client config file."""
     creative_id = os.environ.get('SHEET_CREATIVE_TRACKING_ID', '')
     dashboard_id = os.environ.get('SHEET_META_DASHBOARD_ID', '')
 
-    # Fall back to config file
+    # Fall back to per-client config file
+    config_file = _config_file(client_slug)
     if not creative_id or not dashboard_id:
         try:
-            with open(CONFIG_FILE, 'r') as f:
+            with open(config_file, 'r') as f:
                 config = json.load(f)
             if not creative_id:
                 creative_id = config.get('creative_tracking_id', '')
@@ -399,13 +423,14 @@ def get_sheet_config():
     }
 
 
-def save_sheet_config(creative_id, dashboard_id):
-    """Save Google Sheet IDs to config file."""
+def save_sheet_config(creative_id, dashboard_id, client_slug='default'):
+    """Save Google Sheet IDs to per-client config file."""
     config = {
         'creative_tracking_id': creative_id,
         'meta_dashboard_id': dashboard_id,
     }
-    with open(CONFIG_FILE, 'w') as f:
+    config_file = _config_file(client_slug)
+    with open(config_file, 'w') as f:
         json.dump(config, f, indent=2)
     return config
 
@@ -1162,20 +1187,22 @@ def fetch_and_process_all():
     return result
 
 
-def _save_file_cache(data):
-    """Save processed data to file cache for persistence across restarts."""
+def _save_file_cache(data, client_slug='default'):
+    """Save processed data to per-client file cache for persistence across restarts."""
     try:
-        with open(CACHE_FILE, 'w') as f:
+        cache_file = _cache_file(client_slug)
+        with open(cache_file, 'w') as f:
             json.dump(data, f, indent=2)
-        print('[sheets_data] File cache saved.')
+        print(f'[sheets_data] File cache saved for {client_slug}.')
     except Exception as e:
         print(f'[sheets_data] Error saving file cache: {e}')
 
 
-def _load_file_cache():
-    """Load cached data from file. Returns None if stale or missing."""
+def _load_file_cache(client_slug='default'):
+    """Load cached data from per-client file. Returns None if stale or missing."""
     try:
-        with open(CACHE_FILE, 'r') as f:
+        cache_file = _cache_file(client_slug)
+        with open(cache_file, 'r') as f:
             data = json.load(f)
         return data
     except (FileNotFoundError, json.JSONDecodeError):

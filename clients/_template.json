@@ -1,0 +1,94 @@
+{
+  "slug": "[client-slug]",
+  "name": "[SHORT NAME]",
+  "fullName": "[CLIENT FULL NAME]",
+  "pageTitle": "[SHORT NAME] Batch Generator",
+  "copywriterSuggestions": ["[COPYWRITER 1]", "[COPYWRITER 2]"],
+  "googleDoc": {
+    "clientNameForDoc": "[CLIENT FULL NAME]"
+  },
+  "masterPrompt": "# [CLIENT NAME] Creative System \u2014 Master System Prompt\n\nYou are a Meta ads creative strategist for [CLIENT NAME], a [SERVICE DESCRIPTION] company. You work within the BAD Marketing agency's creative workflow. Your job is to generate data-driven creative briefs that match the agency's exact template format.\n\n## BRAND CONTEXT\n\n**Company:** [CLIENT NAME] ([CLIENT FULL NAME])\n**Service:** [SERVICE DESCRIPTION]\n**Target Customer:** [TARGET CUSTOMER DESCRIPTION]\n**Conversion Goal:** [CONVERSION GOAL]\n**Key Differentiators:** [KEY DIFFERENTIATORS]\n**Tone / Brand Voice:** [BRAND VOICE DESCRIPTION]\n\n## PERFORMANCE BENCHMARKS\n\n[ADD CLIENT-SPECIFIC KPI TARGETS AND BENCHMARKS HERE]\n\n## CREATIVE NAMING CONVENTION\n\n[DESCRIBE THE CLIENT'S NAMING CONVENTION FOR AD CREATIVES]\n\n## AWARENESS LEVELS\n\n- **Most Aware** \u2014 [DESCRIPTION]\n- **Product Aware** \u2014 [DESCRIPTION]\n- **Solution Aware** \u2014 [DESCRIPTION]\n- **Problem Aware** \u2014 [DESCRIPTION]\n- **Unaware** \u2014 [DESCRIPTION]\n\n## LEAD TYPES\n\n[DESCRIBE THE CLIENT'S LEAD TYPES AND WHAT THEY MEAN]\n\n## RULES & CONSTRAINTS\n\n[ADD CLIENT-SPECIFIC RULES, COMPLIANCE REQUIREMENTS, AND CONSTRAINTS]",
+  "performanceReport": "---\n\n## STEP 1: PERFORMANCE REPORT\n\nBefore generating the batch, analyze the performance data from the context above. Present a brief report:\n\n1. **KPI Snapshot** \u2014 Current [PRIMARY KPI], [SECONDARY KPI], [TERTIARY KPI] vs targets\n2. **Top 3-5 Performers** \u2014 Best static/video/copy ads right now\n3. **What's Working** \u2014 Which angles, visuals, and awareness levels are trending\n4. **What's Failing** \u2014 Any ads to kill or new losing patterns\n5. **3 Recommended Batch Directions** \u2014 Options A, B, C with rationale\n\nThen proceed to generate the batch below.\n\n---",
+  "generators": {
+    "static": "## CRITICAL: OUTPUT PLAIN TEXT ONLY \u2014 DO NOT USE ANY TOOLS OR SKILLS\nDo not invoke the docx skill, pdf skill, xlsx skill, or any other skill. Do not create files. Do not run code. Output the briefs as plain text directly in this chat. The user will copy your text into a separate Doc Generator tool.\n\n**Model requirement:** This prompt is designed for **Claude Opus 4.6**.\n\n## GENERATE STATIC BATCH\n\nGenerate a batch of {{BATCH_SIZE}} static ad creatives for [CLIENT NAME].\n\n### Batch Parameters\n- **Batch Focus:** {{BATCH_FOCUS}}\n- **Net New / Iteration:** {{NET_NEW}}\n- **Visual Style(s):** {{VISUALS}}\n- **Variation Type:** {{VARIATION_TYPE}}\n- **Copywriter:** {{COPYWRITER}}\n- **Ratio Format(s):** {{RATIO_FORMAT}}\n- **Ad Platform:** {{AD_PLATFORM}}\n- **Landing Page:** {{LANDING_PAGE}}\n- **Brand Assets:** {{BRAND_ASSETS}}\n- **Avatar:** {{AVATAR}}\n- **Brand Voice:** {{BRAND_VOICE_STATIC}}\n- **Static Format:** {{STATIC_FORMAT}}\n- **Additional Notes:** {{ADDITIONAL_NOTES}}\n\n### Awareness Level Distribution\n{{AWARENESS}}\n\n[ADD CLIENT-SPECIFIC STATIC CREATIVE INSTRUCTIONS, FORMAT REQUIREMENTS, AND FIELD SPECIFICATIONS HERE]\n\n{{CONTEXT}}",
+    "video": "## CRITICAL: OUTPUT PLAIN TEXT ONLY \u2014 DO NOT USE ANY TOOLS OR SKILLS\nDo not invoke the docx skill, pdf skill, xlsx skill, or any other skill. Do not create files. Do not run code. Output the briefs as plain text directly in this chat. The user will copy your text into a separate Doc Generator tool.\n\n**Model requirement:** This prompt is designed for **Claude Opus 4.6**.\n\n## GENERATE VIDEO BATCH\n\nGenerate a batch of {{BATCH_SIZE}} video ad creatives for [CLIENT NAME].\n\n### Batch Parameters\n- **Batch Focus:** {{BATCH_FOCUS}}\n- **Net New / Iteration:** {{NET_NEW}}\n- **Variation Type:** {{VARIATION_TYPE}}\n- **Copywriter:** {{COPYWRITER}}\n- **Ratio Format(s):** {{RATIO_FORMAT}}\n- **Ad Platform:** {{AD_PLATFORM}}\n- **Landing Page:** {{LANDING_PAGE}}\n- **Brand Assets:** {{BRAND_ASSETS}}\n- **Avatar:** {{AVATAR}}\n- **Brand Voice:** {{BRAND_VOICE_VIDEO}}\n- **Additional Notes:** {{ADDITIONAL_NOTES}}\n\n### Awareness Level Distribution\n{{AWARENESS}}\n\n[ADD CLIENT-SPECIFIC VIDEO CREATIVE INSTRUCTIONS, FORMAT REQUIREMENTS, AND FIELD SPECIFICATIONS HERE]\n\n{{CONTEXT}}",
+    "copy": "## CRITICAL: OUTPUT PLAIN TEXT ONLY \u2014 DO NOT USE ANY TOOLS OR SKILLS\nDo not invoke the docx skill, pdf skill, xlsx skill, or any other skill. Do not create files. Do not run code. Output the briefs as plain text directly in this chat. The user will copy your text into a separate Doc Generator tool.\n\n**Model requirement:** This prompt is designed for **Claude Opus 4.6**.\n\n## GENERATE COPY BATCH\n\nGenerate a batch of {{BATCH_SIZE}} copy variations for [CLIENT NAME].\n\n### Batch Parameters\n- **Batch Focus:** {{BATCH_FOCUS}}\n- **Copy Type:** {{COPY_TYPE}}\n- **Hold Constant:** {{HOLD_CONSTANT}}\n- **Net New / Iteration:** {{NET_NEW}}\n- **Variation Type:** {{VARIATION_TYPE}}\n- **Copywriter:** {{COPYWRITER}}\n- **Ad Platform:** {{AD_PLATFORM}}\n- **Landing Page:** {{LANDING_PAGE}}\n- **Avatar:** {{AVATAR}}\n- **Additional Notes:** {{ADDITIONAL_NOTES}}\n\n### Awareness Level Distribution\n{{AWARENESS}}\n\n[ADD CLIENT-SPECIFIC COPY INSTRUCTIONS, FORMAT REQUIREMENTS, AND FIELD SPECIFICATIONS HERE]\n\n{{CONTEXT}}",
+    "ideation": "## CRITICAL: OUTPUT PLAIN TEXT ONLY \u2014 DO NOT USE ANY TOOLS OR SKILLS\nDo not invoke the docx skill, pdf skill, xlsx skill, or any other skill. Do not create files. Do not run code. Output the briefs as plain text directly in this chat.\n\n**Model requirement:** This prompt is designed for **Claude Opus 4.6**.\n\n## IDEATION SESSION\n\nRun a creative ideation session for [CLIENT NAME].\n\n### Parameters\n- **Batch Type:** {{BATCH_TYPE}}\n- **Focus:** {{FOCUS}}\n- **Constraints:** {{CONSTRAINTS}}\n- **Additional Notes:** {{ADDITIONAL_NOTES}}\n\n[ADD CLIENT-SPECIFIC IDEATION INSTRUCTIONS AND FRAMEWORKS HERE]\n\n{{CONTEXT}}"
+  },
+  "focusSuggestions": {
+    "static": [
+      "[SUGGESTION 1 FOR STATIC BATCH FOCUS]",
+      "[SUGGESTION 2 FOR STATIC BATCH FOCUS]"
+    ],
+    "video": [
+      "[SUGGESTION 1 FOR VIDEO BATCH FOCUS]",
+      "[SUGGESTION 2 FOR VIDEO BATCH FOCUS]"
+    ],
+    "copy": [
+      "[SUGGESTION 1 FOR COPY BATCH FOCUS]",
+      "[SUGGESTION 2 FOR COPY BATCH FOCUS]"
+    ]
+  },
+  "topPerformers": {
+    "static": [],
+    "video": [],
+    "copy": []
+  },
+  "netNewOptions": {
+    "visualStyles": {
+      "static": [],
+      "video": []
+    },
+    "copyAngles": [],
+    "hookTypes": []
+  },
+  "iterationSuggestions": [
+    "New visual style, same copy",
+    "Different hook type",
+    "Adjust for colder audience",
+    "Swap visual pairing",
+    "Different copy angle, same visual",
+    "Test new awareness level"
+  ],
+  "timeframeMetrics": {},
+  "awarenessPresets": {
+    "default": {
+      "1": { "mostAware": 1, "productAware": 0, "solutionAware": 0, "problemAware": 0, "unaware": 0 },
+      "2": { "mostAware": 1, "productAware": 1, "solutionAware": 0, "problemAware": 0, "unaware": 0 },
+      "3": { "mostAware": 1, "productAware": 1, "solutionAware": 1, "problemAware": 0, "unaware": 0 },
+      "4": { "mostAware": 2, "productAware": 1, "solutionAware": 1, "problemAware": 0, "unaware": 0 },
+      "5": { "mostAware": 2, "productAware": 1, "solutionAware": 1, "problemAware": 1, "unaware": 0 }
+    },
+    "warm": {
+      "1": { "mostAware": 1, "productAware": 0, "solutionAware": 0, "problemAware": 0, "unaware": 0 },
+      "2": { "mostAware": 1, "productAware": 1, "solutionAware": 0, "problemAware": 0, "unaware": 0 },
+      "3": { "mostAware": 2, "productAware": 1, "solutionAware": 0, "problemAware": 0, "unaware": 0 },
+      "4": { "mostAware": 2, "productAware": 1, "solutionAware": 1, "problemAware": 0, "unaware": 0 },
+      "5": { "mostAware": 3, "productAware": 1, "solutionAware": 1, "problemAware": 0, "unaware": 0 }
+    },
+    "cold": {
+      "1": { "mostAware": 0, "productAware": 0, "solutionAware": 0, "problemAware": 1, "unaware": 0 },
+      "2": { "mostAware": 0, "productAware": 1, "solutionAware": 0, "problemAware": 1, "unaware": 0 },
+      "3": { "mostAware": 0, "productAware": 1, "solutionAware": 1, "problemAware": 1, "unaware": 0 },
+      "4": { "mostAware": 1, "productAware": 1, "solutionAware": 1, "problemAware": 1, "unaware": 0 },
+      "5": { "mostAware": 1, "productAware": 1, "solutionAware": 1, "problemAware": 1, "unaware": 1 }
+    },
+    "balanced": {
+      "1": { "mostAware": 0, "productAware": 0, "solutionAware": 1, "problemAware": 0, "unaware": 0 },
+      "2": { "mostAware": 1, "productAware": 0, "solutionAware": 0, "problemAware": 1, "unaware": 0 },
+      "3": { "mostAware": 1, "productAware": 1, "solutionAware": 1, "problemAware": 0, "unaware": 0 },
+      "4": { "mostAware": 1, "productAware": 1, "solutionAware": 1, "problemAware": 1, "unaware": 0 },
+      "5": { "mostAware": 1, "productAware": 1, "solutionAware": 1, "problemAware": 1, "unaware": 1 }
+    }
+  },
+  "defaults": {
+    "copywriter": "[DEFAULT COPYWRITER]",
+    "landingPage": "[LANDING PAGE URL]",
+    "brandAssets": "[BRAND ASSETS FOLDER URL]",
+    "avatar": "[TARGET AUDIENCE DESCRIPTION]",
+    "brandVoiceStatic": "[BRAND VOICE FOR STATIC ADS]",
+    "brandVoiceVideo": "[BRAND VOICE FOR VIDEO ADS]",
+    "ratioFormat": ["1:1", "9:16"],
+    "adPlatform": "Meta"
+  }
+}

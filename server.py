@@ -26,7 +26,58 @@ from sheets_data import (
     get_performance_data, get_sheet_config, save_sheet_config,
 )
 
+CLIENTS_DIR = os.path.join(SCRIPT_DIR, 'clients')
+
 app = Flask(__name__, static_folder=SCRIPT_DIR)
+
+
+@app.route('/api/clients', methods=['GET'])
+def api_clients():
+    """Return list of available client configs (excluding _template.json)."""
+    try:
+        clients = []
+        if os.path.isdir(CLIENTS_DIR):
+            for fname in sorted(os.listdir(CLIENTS_DIR)):
+                if not fname.endswith('.json') or fname.startswith('_'):
+                    continue
+                fpath = os.path.join(CLIENTS_DIR, fname)
+                try:
+                    with open(fpath, 'r') as f:
+                        cfg = json.load(f)
+                    clients.append({
+                        'slug': cfg.get('slug', fname.replace('.json', '')),
+                        'name': cfg.get('name', ''),
+                        'fullName': cfg.get('fullName', ''),
+                    })
+                except (json.JSONDecodeError, IOError):
+                    continue
+        return jsonify(clients)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/client-config/<slug>', methods=['GET'])
+def api_client_config(slug):
+    """Return full client config JSON. Slug is sanitized to prevent path traversal."""
+    try:
+        # Sanitize slug: only allow lowercase letters, digits, and hyphens
+        safe_slug = re.sub(r'[^a-z0-9-]', '', slug.lower())
+        if not safe_slug or safe_slug.startswith('_'):
+            return jsonify({'error': 'Invalid client slug'}), 400
+
+        fpath = os.path.join(CLIENTS_DIR, f'{safe_slug}.json')
+        # Extra safety: ensure resolved path is inside CLIENTS_DIR
+        if not os.path.realpath(fpath).startswith(os.path.realpath(CLIENTS_DIR)):
+            return jsonify({'error': 'Invalid client slug'}), 400
+
+        if not os.path.isfile(fpath):
+            return jsonify({'error': f'Client "{safe_slug}" not found'}), 404
+
+        with open(fpath, 'r') as f:
+            config = json.load(f)
+        return jsonify(config)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/')
@@ -76,8 +127,10 @@ def api_generate_doc():
 
         # Determine a nice filename
         batch_name = parse_field(claude_output, 'BATCH')
+        client_slug = data.get('client_slug', '')
         if not batch_name:
-            batch_name = f"VAM_{batch_type.title()}_Batch"
+            prefix = client_slug.upper() if client_slug else 'Batch'
+            batch_name = f"{prefix}_{batch_type.title()}_Batch"
         safe_name = re.sub(r'[^\w\s-]', '', batch_name).strip()[:60]
         safe_name = re.sub(r'\s+', '_', safe_name)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M')
@@ -362,7 +415,7 @@ def api_create_google_doc():
         # Build payload for Apps Script
         payload = {
             'batch_type': batch_type,
-            'client': 'Value Added Moving',
+            'client': data.get('client_name', 'Client'),
             'campaign_name': campaign_name,
             'date': datetime.now().strftime('%m-%d-%Y'),
             'overview': overview,
@@ -482,7 +535,7 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8090))
     print(f"""
 ╔══════════════════════════════════════════════════╗
-║     VAM Creative Production System               ║
+║     Creative Batch Generator                      ║
 ║     Open: http://localhost:{port}                  ║
 ╚══════════════════════════════════════════════════╝
     """)
