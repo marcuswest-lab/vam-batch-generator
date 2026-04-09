@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Creative Batch Generator</title>
+<title>VAM Batch Generator</title>
 <style>
   :root {
     --bg: #0f1117;
@@ -699,15 +699,9 @@
 </style>
 </head>
 <body>
-<div id="clientBar" style="display:flex; align-items:center; gap:12px; padding:12px 24px; background:var(--surface2); border-bottom:1px solid var(--border); margin-bottom:0;">
-  <label style="font-size:12px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.5px;">Client</label>
-  <select id="clientSelector" onchange="switchClient(this.value)" style="padding:8px 14px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text); font-family:inherit; font-size:14px; font-weight:600; min-width:200px; cursor:pointer;">
-  </select>
-  <span id="clientStatus" style="font-size:11px; color:var(--text-dim);"></span>
-</div>
 <div class="container">
   <header>
-    <h1>Batch Generator</h1>
+    <h1>VAM Batch Generator</h1>
     <p>Pitch creative concepts or generate production briefs — then paste the prompt into Claude.</p>
     <div id="dataStatusBar" style="display: none; margin-top: 12px; padding: 6px 14px; border-radius: 20px; background: var(--surface2); border: 1px solid var(--border); font-size: 12px; color: var(--text-dim); display: inline-flex; align-items: center; gap: 8px;">
       <span id="dataStatusDot" style="width: 8px; height: 8px; border-radius: 50%; background: #6b7280;"></span>
@@ -1233,7 +1227,7 @@ async function generateDoc() {
     const resp = await fetch('/api/generate-doc', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, client_slug: activeClientSlug })
+      body: JSON.stringify({ text })
     });
 
     if (!resp.ok) {
@@ -1293,7 +1287,7 @@ async function copyForGoogleDocs() {
     const resp = await fetch('/api/format-for-gdocs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, client_slug: activeClientSlug })
+      body: JSON.stringify({ text })
     });
     const data = await resp.json();
 
@@ -1365,7 +1359,7 @@ function toggleGDocSettings() {
   const panel = document.getElementById('gdocSettingsPanel');
   panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
   // Load saved URL into the input
-  const saved = localStorage.getItem(`${activeClientSlug}_appsScriptUrl`);
+  const saved = localStorage.getItem('vamAppsScriptUrl');
   if (saved) {
     document.getElementById('appsScriptUrl').value = saved;
   }
@@ -1374,7 +1368,7 @@ function toggleGDocSettings() {
 function saveGDocSettings() {
   const url = document.getElementById('appsScriptUrl').value.trim();
   if (url) {
-    localStorage.setItem(`${activeClientSlug}_appsScriptUrl`, url);
+    localStorage.setItem('vamAppsScriptUrl', url);
     document.getElementById('gdocStatus').style.display = 'inline';
     document.getElementById('gdocSaveMsg').style.display = 'inline';
     setTimeout(() => {
@@ -1396,7 +1390,7 @@ async function generateGoogleDoc() {
     return;
   }
 
-  const scriptUrl = localStorage.getItem(`${activeClientSlug}_appsScriptUrl`);
+  const scriptUrl = localStorage.getItem('vamAppsScriptUrl');
   if (!scriptUrl) {
     toggleGDocSettings();
     errorArea.textContent = 'Please configure your Apps Script URL first (click "Google Doc Setup" above).';
@@ -1412,7 +1406,7 @@ async function generateGoogleDoc() {
     const resp = await fetch('/api/create-google-doc', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, script_url: scriptUrl, client_slug: activeClientSlug })
+      body: JSON.stringify({ text, script_url: scriptUrl })
     });
 
     const result = await resp.json();
@@ -1453,140 +1447,1069 @@ async function generateGoogleDoc() {
   }
 }
 
-// Load Google Doc connection status — called after client config loads
-function initGDocStatus() {
-  const saved = localStorage.getItem(`${activeClientSlug}_appsScriptUrl`);
+// Load Google Doc connection status on page load
+(function initGDocStatus() {
+  const saved = localStorage.getItem('vamAppsScriptUrl');
   if (saved) {
     const status = document.getElementById('gdocStatus');
     if (status) status.style.display = 'inline';
   }
-}
+})();
 
 // === MASTER SYSTEM PROMPT (embedded) ===
-let MASTER_PROMPT = '';
+let MASTER_PROMPT = `# VAM Creative System \u2014 Master System Prompt
+
+You are a Meta ads creative strategist for VAM, a long-distance moving company. You work within the BAD Marketing agency's creative workflow. Your job is to generate data-driven creative briefs that match the agency's exact template format.
+
+## BRAND CONTEXT
+
+**Company:** VAM (Value Added Moving)
+**Service:** Long-distance / cross-country moving (interstate moves)
+**Target Customer:** Individuals and families moving across state lines, primarily 2-4+ bedroom households
+**Geographic Scope:** Nationwide (US)
+**Primary Platform:** Meta (Facebook + Instagram)
+**Key Differentiators:** Competitive pricing (starting at $1,597), licensed & insured, nationwide coverage, transparent quoting process
+**Landing Page:** Leads to a free quote form
+**Conversion Flow:** Ad \u2192 Landing Page \u2192 Free Quote Form (Lead) \u2192 Phone Call \u2192 Booking \u2192 Move
+
+## CURRENT PERFORMANCE (as of April 2026)
+
+| Metric | Current | Target | Gap |
+|--------|---------|--------|-----|
+| ROAS | 1.64x | 2.0x | -18% |
+| Cost per Connected Call | $388.39 | $250 | +55% |
+| CAC | $1,030.55 | $750 | +37% |
+| CPL | $74.27 | \u2014 | \u2014 |
+| Close Rate (Connected) | 37.69% | \u2014 | \u2014 |
+| Total Spend | $621,421 | \u2014 | \u2014 |
+
+**Strategic Priority:** Close the remaining 18% gap to 2.0x ROAS by scaling proven winners (FlyingFunny Gmail 2.20x, CheckThis Gmail 1.65x) and expanding high-performing video formats (Done For You 7.08x, Moving Cost Clarity 2.72x) while reducing cost per connected call.
+
+## PROVEN WINNING ELEMENTS
+
+### Top Copy Angles (ranked by proven performance)
+1. **Social Proof Shock** \u2014 "Check This", "Dodged 4k Bill", "Almost Paid Double" \u2192 ROAS 1.32-1.67x, massive volume
+2. **Humor/Relatability** \u2014 "Flying Funny" \u2192 ROAS 2.20x at $59K spend \u2014 #1 performer by profit
+3. **Price Anchoring** \u2014 "Starting at $1,597", "City Prices" \u2192 ROAS 1.26-1.90x
+4. **Cost Exposure** \u2014 "Almost Paid Double", "I Thought It Cost More", "Moving Cost Clarity" \u2192 ROAS 1.32-2.72x
+5. **Service Promise** \u2014 "Full Service Moves", "Before You Book", "Cross Country" \u2192 ROAS 1.61-2.26x \u2014 strong emerging angles
+6. **Emotional Relief** \u2014 "Stress Free Long Distance", "Moving Checklist", "Stress Free" \u2192 ROAS 1.13-1.64x
+7. **Savings Quantification** \u2014 "Save Up To 50%" \u2192 ROAS 1.17x at high volume ($136K)
+
+### Top Visual Styles
+**Static (use these by default):**
+- Gmail \u2014 Mock email notification (dominant format: FlyingFunny Gmail 2.20x at $59K, CheckThis Gmail 1.65x at $71K, AlmostPaidDouble Gmail 1.32x at $94K). Creative team produces dark + light variations.
+- TwitterStyle \u2014 Social media post mockup (CheckThis TwitterLight 1.67x ROAS at $29K)
+- TruckBack \u2014 Rear of VAM truck photo (LongDistance1597 1.31x at $76K)
+- TruckFreeway \u2014 Highway truck shot (CityPricesV3 1.90x at $4.3K)
+- AppleNote \u2014 Apple Notes screenshot (MovingChecklist 1.35x at $12.7K). Creative team produces dark + light variations.
+- PricingMapTruck \u2014 Carousel format (3.12x ROAS at $2.8K \u2014 emerging)
+
+**Note:** Light/dark variants are NOT separate styles. Use the base name (e.g., "Gmail" not "Gmail Dark"). The creative team makes both variations.
+
+**Video (use these by default):**
+- Done For You Problem-Solution format \u2014 7.08x ROAS at $2.2K, multiple winning variations (Lead 10, Lead 5, Lead 23)
+- Moving Cost Clarity \u2014 Offer Lead format \u2014 2.72x ROAS at $11K, scaling fast
+- Step-by-Step Clarity \u2014 Problem-Solution Lead \u2014 4.48x ROAS at $1.9K
+- Similar Customer Proof \u2014 Offer Lead \u2014 4.32x ROAS at $2.2K
+- Stranger Danger Validation \u2014 Story Lead \u2014 2.74x ROAS at $3.9K
+- Real Trucks Real Prices \u2014 Problem-Solution Lead \u2014 2.68x ROAS at $3.5K
+- VAM Crew Members \u2014 Organic Looking \u2014 1.90x ROAS at $4.7K
+- UGC_AsianWoman (VV10/VV11/VV12) \u2014 8-11% CTR, legacy performer
+
+### Top Copy Hook + Body Combos
+- CHK7_CrossCountry + CB5_LongDistanceMoves \u2014 Highest ROAS ($3.8K, 2.26x ROAS)
+- CHK15_FullServiceMoves + CB8_BeforeYouBook \u2014 Strong winner ($4.8K, 2.22x ROAS)
+- CHK27_34BedroomCross-country + CB11_EducationalValue \u2014 Emerging ($3.8K, 1.70x ROAS)
+- CHK9_StressFree + CB6_MovingOutOfState \u2014 Efficient ($5.7K, 1.64x ROAS, lowest CPConnected $228)
+- CHK18_Moving + CB8_BeforeYouBook \u2014 Efficient ($7.2K, 1.61x ROAS, low CPConnected $279)
+- CHK2_StartingAt1597 + CB1_Savings \u2014 Proven volume ($42.5K, 1.35x ROAS)
+- CHK6_CheckRate + CB3_CostSavings \u2014 Solid volume ($32.3K, 1.31x ROAS)
+- CHK2_StartingAt1597 + CB3_CostSavings \u2014 Highest volume ($154K, 1.26x ROAS)
+
+## CONFIRMED LOSING PATTERNS \u2014 DO NOT USE
+
+**Visual formats that always fail:**
+- StickyNote (SV29), EducationalLayout (SV30), HoldingSign (SV19/20/21), TruckCalendar (SV22), UsvsThem (SV12), EmptySpace (SV27), TruckMap (SV28), Carousel format, Copy-only single image, ChatGPT conversation (VV2), Animated truck variants (VV4/VV5/VV6), Polished IG testimonial (VV13)
+
+**Copy angles that always fail:**
+- "Licensed & Insured" as headline, "Arrived Flawless", "From Scheduling to Delivery", "Gently and Correctly", "Relax Leave It To Us", "Coast to Coast" alone, "Choose Date Later", "Move Timeline", any calendar/scheduling messaging
+
+**Targeting approaches that fail:**
+- NY-specific copy, city-to-city route copy (NYtoLA, LAtoAustin, etc.), city-specific lifestyle visuals, any geographic targeting in the ad creative
+
+**Concepts that always fail:**
+- Holiday/seasonal theming (kills even winning angles), educational/infographic formats, branded/polished production, comparison charts
+
+## FRAMEWORKS
+
+### Kaleidoscope Method (from Goated Ads.pdf)
+**Hook \u00d7 Meat \u00d7 CTA = Ad**
+- Generate hooks independently from meats and CTAs
+- 80% of prep time on hooks, 20% on meat, ~0% on CTAs
+- One hook can pair with multiple meats; one meat with multiple hooks
+
+### 70-20-10 Hook Rule (from Hooks.pdf)
+- **70%** = Variations of proven VAM winners (listed above)
+- **20%** = Hooks adapted from adjacent service industries (home services, insurance, car dealers, travel deals)
+- **10%** = Completely new experimental hooks
+
+### 5 Awareness Levels for Hook Distribution
+Target this distribution across each batch:
+1. **Most Aware (30%)** \u2014 Offer-driven: "Starting at $1,597 \u2014 get your free quote"
+2. **Product Aware (25%)** \u2014 Proof-driven: "See why 12,000 families trusted VAM"
+3. **Solution Aware (20%)** \u2014 Promise-driven: "Move your entire home in 14 days"
+4. **Problem Aware (15%)** \u2014 Pain-driven: "Tired of getting ghosted after a quote?"
+5. **Unaware (10%)** \u2014 Curiosity-driven: "The hidden fee in 90% of moving quotes"
+
+### 8 Verbal Hook Types (rotate across batch for diversity)
+Labels, Questions (yes/open), Conditionals, Commands, Statements, Lists/Steps, Narratives, Exclamations
+
+### 5 Ad Meat Types
+1. **Testimonial** \u2014 UGC, direct-to-camera, customer stories (BEST for VAM video)
+2. **Faceless** \u2014 Screenshots, text overlays, mockups (BEST for VAM static)
+3. **Demonstration** \u2014 Before/after, crew working, truck loading
+4. **Story** \u2014 Customer journey, mini-documentary
+5. **Education** \u2014 DO NOT USE for VAM (confirmed loser)
+
+### Lead Types (BAD Marketing dropdown values \u2014 use ONLY these)
+- **Offer** \u2014 Direct offer/deal (best for Most Aware)
+- **Promise** \u2014 Outcome/benefit promise (best for Product Aware, Solution Aware)
+- **Problem-Solution** \u2014 Present problem, offer solution (best for Solution Aware, Problem Aware)
+- **Secret** \u2014 Hidden/insider information angle (best for Problem Aware, Unaware)
+- **Proclamation** \u2014 Bold statement/declaration (best for Most Aware, Product Aware)
+- **Story** \u2014 Narrative/testimonial-driven (best for Product Aware, Unaware)
+
+**Awareness Level \u2192 Lead Type mapping:**
+| Awareness Level | Primary Lead Type | Secondary Lead Type |
+|---|---|---|
+| Most Aware | Offer | Proclamation |
+| Product Aware | Story | Promise |
+| Solution Aware | Promise | Problem-Solution |
+| Problem Aware | Problem-Solution | Secret |
+| Unaware | Secret | Story |
+
+### Variation Types (differ by brief type \u2014 use ONLY these)
+**Static briefs:** Copy | Visual
+**Video briefs:** Lead | Pattern Interrupt | Body | CTA
+**Body copy briefs:** Lead | Body | CTA | Full
+
+**CRITICAL RULE: One variation type per batch.** All 5 creatives in a batch MUST use the SAME variation type. This isolates the variable being tested so we can measure what\u2019s actually driving results. The batch parameters will specify which variation type to use.
+
+## NAMING CONVENTIONS (Creative Tracker Format)
+
+The creative name is a formula: \`[Angle Name] - [variable based on Variation Type]\`. The sequential number (#) and CID/CPID/VID hash are auto-generated by the tracker \u2014 briefs only provide the base name.
+
+**Static naming depends on Variation Type:**
+- Copy variation: \`[Angle Name] - [Lead Type] Lead\` \u2192 e.g., \`Quiet Overwhelm - Offer Lead\`
+- Visual variation: \`[Angle Name] - [Visual Style]\` \u2192 e.g., \`VAM Crew Members - Organic Looking\`
+- Tracker auto-appends: \u2192 \`Quiet Overwhelm - Offer Lead 1 - CID[auto]\`
+
+**Video naming:** \`[Angle Name] - [Lead Type] [Variation Type]\`
+- Lead: \`Done For You - Problem-Solution Lead\`
+- Body: \`Real Trucks Real Prices - Problem-Solution Body\`
+- Pattern Interrupt / Graphic Overlay / CTA follow the same pattern
+
+**Copy naming (same pattern as video):**
+- Lead/Body/CTA: \`[Angle Name] - [Lead Type] [Variation Type]\` \u2192 e.g., \`Heart3Heart - Promise Lead\`
+- Full: \`[Angle Name] - [Lead Type]\` \u2192 e.g., \`Heart3Heart - Promise\`
+- Special: When Copy Type = Asset Set \u2192 \`[Angle Name] - Asset Set\`
+
+**KEEP NAMES SHORT** \u2014 Angle Name, Idea Name, Style Name should all be 2-4 words max, natural casing with spaces.
+- Good: Quiet Overwhelm, 3BR Owner Stories, No Ghosting, Cost Savings UGC
+- Bad: Almost Paid Double For My Move, Check This Out Before You Book
+
+## BAD MARKETING WORKFLOW
+
+- Creative requests submitted via ClickUp form in batches
+- One form per batch (5 creatives per batch)
+- Copy brief completed BEFORE creative request
+- Static assigned to Lead Designer, video assigned to Lead Video Editor
+- Status flow: To-Do \u2192 Assigned \u2192 In Progress \u2192 Revise \u2192 Team Review \u2192 Final Review \u2192 Upload to Drive \u2192 Complete
+
+## OUTPUT FORMAT
+
+When generating briefs, match the exact BAD Marketing template structure. **All dropdown fields must use ONLY the values listed below.**
+
+### Dropdown Field Reference (from BAD Marketing .docx templates)
+
+| Field | Allowed Values |
+|-------|---------------|
+| AI Allowed | Yes, AI Is Allowed \u00b7 NO NO NO NO |
+| Net New/Iteration | Net New \u00b7 Iteration |
+| Awareness Level | Most Aware \u00b7 Product Aware \u00b7 Solution Aware \u00b7 Problem Aware \u00b7 Unaware |
+| Lead Type | Offer \u00b7 Promise \u00b7 Problem-Solution \u00b7 Secret \u00b7 Proclamation \u00b7 Story |
+| Status | Ready For Internal \u00b7 Changes Required \u00b7 Needs Client Approval \u00b7 Approved |
+| Ad Platform (Static/Video) | All \u00b7 Meta \u00b7 Google \u00b7 N/A |
+| Ad Platform (Body Copy) | Meta \u00b7 YouTube \u00b7 PMAX/Search/Display \u00b7 All |
+| Variation Type (Static) | Copy \u00b7 Visual |
+| Variation Type (Video) | Lead \u00b7 Pattern Interrupt \u00b7 Graphic Overlay \u00b7 Body \u00b7 CTA |
+| Variation Type (Body Copy) | Lead \u00b7 Body \u00b7 CTA \u00b7 Full |
+| Video Type (Video only) | Intro Video \u00b7 VSL \u00b7 Webinar \u00b7 Ad Video \u00b7 Other Video |
+| Static Format (Static only) | Single Static \u00b7 Carousel |
+| Copy Type (Body Copy only) | Primary Text \u00b7 Asset Set \u00b7 Headline |
+
+### Brief Structures
+
+**For Static Briefs:** OVERVIEW section with batch-level fields + Static Format, then 5 numbered creatives each with: Creative Name, Notes, Design Notes, Variation Type (Copy/Visual), Awareness Level, Lead Type, Status, Copy
+
+**For Video Briefs:** OVERVIEW section with Video Type field, then 5 numbered videos each with: Creative Name, Notes, Editing Notes, Variation Type (Lead/Pattern Interrupt/Graphic Overlay/Body/CTA), Awareness Level, Lead Type, Status, Lead Script, Body Script
+
+**For Body Copy Briefs:** OVERVIEW section, then 5 numbered items each with: Name, Notes, Variation Type (Lead/Body/CTA/Full), Awareness Level, Lead Type, Status, Headline, Body Copy`;
 
 // === PERFORMANCE REPORT INSTRUCTION ===
-let PERFORMANCE_REPORT = '';
+const PERFORMANCE_REPORT = `---
+
+## STEP 1: PERFORMANCE REPORT
+
+Before generating the batch, analyze the performance data from the context above. Present a brief report:
+
+1. **KPI Snapshot** \u2014 Current ROAS, cost per connected, CAC vs targets
+2. **Top 3-5 Performers** \u2014 Best static/video/copy ads right now
+3. **What's Working** \u2014 Which angles, visuals, and awareness levels are trending
+4. **What's Failing** \u2014 Any ads to kill or new losing patterns
+5. **3 Recommended Batch Directions** \u2014 Options A, B, C based on the data
+
+Then say: "Based on this data, I'm generating your batch with the focus specified below. Let me know if you'd like to adjust the direction first."
+
+---`;
 
 // === BATCH GENERATOR TEMPLATES ===
-let STATIC_GENERATOR = '';
+const STATIC_GENERATOR = `## CRITICAL: OUTPUT PLAIN TEXT ONLY — DO NOT USE ANY TOOLS OR SKILLS
+Do not invoke the docx skill, pdf skill, xlsx skill, or any other skill. Do not create files. Do not run code. Output the briefs as plain text directly in this chat. The user will copy your text into a separate Doc Generator tool.
 
-let VIDEO_GENERATOR = '';
+**Model requirement:** This prompt is designed for **Claude Opus 4.6**.
 
-let COPY_GENERATOR = '';
+## GENERATE STATIC BATCH
+
+Generate a batch of {{BATCH_SIZE}} static ad creatives for VAM.
+
+### Batch Parameters
+- **Batch Focus:** {{BATCH_FOCUS}}
+- **Variation Type (all 5 must match):** {{VARIATION_TYPE}}
+- **Awareness Distribution:** {{AWARENESS}}
+- **Visual Style:** {{VISUALS}}
+- **Net New/Iteration:** {{NET_NEW}}
+- **Landing Page URL:** {{LANDING_PAGE}}
+- **Brand Assets Link:** {{BRAND_ASSETS}}
+- **Copywriter:** {{COPYWRITER}}
+{{ADDITIONAL_NOTES}}
+
+### Generation Rules
+
+1. **VARIABLE ISOLATION (non-negotiable):**
+   - **Variation Type for this batch: {{VARIATION_TYPE}}** — ALL creatives must use this same variation type.
+   - **{{VISUALS}}** — ALL creatives must use this EXACT SAME visual style. Only the {{VARIATION_TYPE}} element changes across creatives. Design notes should be identical across all creatives.
+   - If you change two variables at once, the batch is useless for optimization.
+
+2. **Apply 70-20-10 ONLY to the tested variable (the held-constant elements do NOT change):**
+   - Creatives 1-3 (70%): Variations of proven winners from the Winning Hooks Library
+   - Creative 4 (20%): Adapted from another service industry (home services, insurance, car dealers, travel)
+   - Creative 5 (10%): Experimental new approach
+   - 70-20-10 applies to the TESTED variable only. All constant elements are identical across all creatives.
+
+3. **Each creative must use a DIFFERENT verbal hook type:** Labels, Questions, Conditionals, Commands, Statements, Lists/Steps, Narratives, Exclamations
+
+4. **DO NOT use any element from the Confirmed Losing Patterns** (no StickyNote, EducationalLayout, HoldingSign, holiday themes, geographic targeting, carousel, etc.)
+
+5. **Assign proper naming using Creative Tracker formula (depends on Variation Type):**
+   - Copy variation: \`[Angle Name] - [Lead Type] Lead\` \u2014 e.g., \`Quiet Overwhelm - Offer Lead\`
+   - Visual variation: \`[Angle Name] - [Visual Style]\` \u2014 e.g., \`VAM Crew Members - Organic Looking\`
+   **Keep Angle Names SHORT** (2-4 words). The number (#) and CID are auto-generated by the tracker.
+
+6. **Dropdown constraints \u2014 use ONLY these values:**
+   - Variation Type: **{{VARIATION_TYPE}}** (same for all creatives)
+   - Lead Type: **Offer** / **Promise** / **Problem-Solution** / **Secret** / **Proclamation** / **Story**
+   - Status: **Ready For Internal**
+
+### Output Format
+
+Output the completed batch in this exact format:
+
+\`\`\`
+BATCH: [Batch Name \u2014 e.g., "Social Proof Gmail Batch - Week of [Date]"]
+BATCH TYPE: Static
+BATCH CATEGORY: [e.g., "Social Proof", "Cost Exposure", "Price Anchoring"]
+PRIORITY: Standard
+
+=== OVERVIEW ===
+AI Allowed?: Yes, AI Is Allowed
+Photo Folder:
+Reference: [List reference winning ads this batch builds on]
+Idea Name: [Short batch concept \u2014 2-4 words max]
+Angle Name: [Short angle \u2014 2-3 words max]
+Style Name: [Base visual style \u2014 e.g., "Gmail" not "Gmail Dark" \u2014 team makes light/dark variations]
+Static Format: {{STATIC_FORMAT}}
+Task: Design {{BATCH_SIZE}} static ad creatives for Meta ads
+General Notes: [Any non-design notes for the team]
+Design Notes: [Design-specific guidance]
+Link to Brand Assets: {{BRAND_ASSETS}}
+Ratio Format(s): {{RATIO_FORMAT}}
+Ad Platform: {{AD_PLATFORM}}
+Avatar: {{AVATAR}}
+Brand Voice: {{BRAND_VOICE_STATIC}}
+Net New/Iteration: {{NET_NEW}}
+Landing Page URL: {{LANDING_PAGE}}
+Conversion Objective: Lead Generation
+Copywriter: {{COPYWRITER}}
+
+=== CREATIVE 1 ===
+Creative Name: [Angle Name - variable based on Variation Type] (Copy variation: "Quiet Overwhelm - Offer Lead" | Visual variation: "VAM Crew Members - Organic Looking") \u2014 tracker auto-appends # and CID
+File: [leave blank]
+Notes: [Data-driven rationale in 1-2 sentences]
+Design Notes: [Specific visual direction]
+Variation Type: [Copy / Visual]
+Awareness Level: [Most Aware / Product Aware / Solution Aware / Problem Aware / Unaware]
+Lead Type: [Offer / Promise / Problem-Solution / Secret / Proclamation / Story]
+Status: Ready For Internal
+Copy: [Complete ad copy \u2014 headline, body text, CTA]
+
+=== CREATIVE 2 ===
+[Same format]
+
+=== CREATIVE 3 ===
+[Same format]
+
+=== CREATIVE 4 ===
+[Same format]
+
+=== CREATIVE 5 ===
+[Same format]
+
+=== BATCH SUMMARY ===
+ClickUp Submission Note: [1-line summary]
+Assign To: Lead Designer
+Hook Types Used: [List hook types]
+Awareness Distribution: [List per creative]
+References: [List winning ads these build on]
+\`\`\``;
+
+const VIDEO_GENERATOR = `## CRITICAL: OUTPUT PLAIN TEXT ONLY — DO NOT USE ANY TOOLS OR SKILLS
+Do not invoke the docx skill, pdf skill, xlsx skill, or any other skill. Do not create files. Do not run code. Output the briefs as plain text directly in this chat. The user will copy your text into a separate Doc Generator tool.
+
+**Model requirement:** This prompt is designed for **Claude Opus 4.6**.
+
+## GENERATE VIDEO BATCH
+
+Generate a batch of {{BATCH_SIZE}} video ad creatives for VAM.
+
+### Batch Parameters
+- **Batch Focus:** {{BATCH_FOCUS}}
+- **Variation Type (all 5 must match):** {{VARIATION_TYPE}}
+- **Awareness Distribution:** {{AWARENESS}}
+- **Net New/Iteration:** {{NET_NEW}}
+- **Landing Page URL:** {{LANDING_PAGE}}
+- **Brand Assets Link:** {{BRAND_ASSETS}}
+- **Copywriter:** {{COPYWRITER}}
+{{ADDITIONAL_NOTES}}
+
+### Generation Rules
+
+1. **Apply 70-20-10 across the 5 creatives:**
+   - Creatives 1-3 (70%): Variations of proven UGC hooks
+   - Creative 4 (20%): Hook adapted from another niche's testimonial format
+   - Creative 5 (10%): Experimental new hook angle
+
+2. **UGC testimonials must dominate** \u2014 at least 4 of 5 should be UGC direct-to-camera.
+
+3. **Each hook script must feel natural and unscripted.** Write talking points, not teleprompter scripts.
+
+4. **DO NOT use:** Animated truck formats, holiday themes, educational/explainer formats, polished/branded production, ChatGPT conversation format
+
+5. **Provide 2-3 hook variations per creative**
+
+6. **Assign proper naming using Creative Tracker formula:** \`[Angle Name] - [Lead Type] [Variation Type]\` \u2014 e.g., Lead variation: \`Done For You - Problem-Solution Lead\`, Body variation: \`Real Trucks Real Prices - Problem-Solution Body\`. **Keep Angle Names SHORT** (2-4 words). The number (#) and VID are auto-generated by the tracker.
+
+7. **Single variable testing \u2014 ALL 5 videos in this batch MUST use the SAME Variation Type: {{VARIATION_TYPE}}**
+   Do NOT mix variation types within a batch. This is critical for isolating what\u2019s working.
+
+8. **Dropdown constraints \u2014 use ONLY these values:**
+   - Video Type: **Ad Video**
+   - Variation Type: **{{VARIATION_TYPE}}** (same for all 5)
+   - Lead Type: **Offer** / **Promise** / **Problem-Solution** / **Secret** / **Proclamation** / **Story**
+   - Status: **Ready For Internal**
+
+### Output Format
+
+Output the completed batch in this exact format:
+
+\`\`\`
+BATCH: [Batch Name]
+BATCH TYPE: Video
+BATCH CATEGORY: [e.g., "UGC Cost Angle"]
+PRIORITY: Standard
+
+=== OVERVIEW ===
+Video Type: Ad Video
+AI Allowed?: Yes, AI Is Allowed
+Footage Folder:
+Idea Name: [Short batch concept \u2014 2-4 words max]
+Angle Name: [Short angle \u2014 2-3 words max]
+Style Name: [Short style \u2014 2-3 words max]
+Task: Create 5 video ad creatives for Meta ads
+General Notes: [Non-video notes]
+Editing Notes: [Editing guidance]
+Link to Brand Assets: {{BRAND_ASSETS}}
+Any Other Relevant Assets:
+Ratio Format(s): {{RATIO_FORMAT}}
+Ad Platform: {{AD_PLATFORM}}
+Avatar: {{AVATAR}}
+Brand Voice: {{BRAND_VOICE_VIDEO}}
+Net New/Iteration: {{NET_NEW}}
+Landing Page URL: {{LANDING_PAGE}}
+Conversion Objective: Lead Generation
+Copywriter: {{COPYWRITER}}
+
+=== VIDEO 1 ===
+Creative Name: [Angle Name - Lead Type VariationType] (e.g., Lead: "Done For You - Problem-Solution Lead" | Body: "Real Trucks - Problem-Solution Body") \u2014 tracker auto-appends # and VID
+Video File: [leave blank]
+Notes: [Data-driven rationale]
+Editing Notes: [Pacing, text overlays, captions]
+Variation Type: [Lead / Pattern Interrupt / Graphic Overlay / Body / CTA]
+Awareness Level: [Most Aware / Product Aware / Solution Aware / Problem Aware / Unaware]
+Lead Type: [Offer / Promise / Problem-Solution / Secret / Proclamation / Story]
+Status: Ready For Internal
+
+Lead Script:
+[HOOK \u2014 First 3-5 seconds. Provide 2-3 variations:]
+Variation A: "[Exact words]"
+Variation B: "[Exact words]"
+Variation C: "[Exact words]"
+
+Body Script:
+[BODY \u2014 15-25 seconds. Talking points:]
+- Talking Point 1: [What to cover]
+- Talking Point 2: [What to cover]
+- Talking Point 3: [What to cover]
+
+[CTA \u2014 Last 3-5 seconds:]
+"[Exact CTA words]"
+
+[TALENT DIRECTION:]
+- Setting: [Home interior / in front of boxes / outside new home]
+- Camera: [iPhone selfie-style / tripod medium]
+- Demographic: [Age range, gender, ethnicity]
+- Tone: [Excited / Relieved / Surprised / Conversational]
+- Key Direction: Must feel like authentic iPhone video, NOT polished production
+
+[FACEBOOK AD COPY:]
+- Primary Text: [2-4 sentences above video]
+- Headline: [Below video]
+- CTA Button: [Get Quote / Learn More]
+
+=== VIDEO 2 ===
+[Same format]
+
+=== VIDEO 3 ===
+[Same format]
+
+=== VIDEO 4 ===
+[Same format]
+
+=== VIDEO 5 ===
+[Same format]
+
+=== BATCH SUMMARY ===
+ClickUp Submission Note: [1-line summary]
+Assign To: Lead Video Editor
+Talent Requirements: [# performers, demographics]
+Hook Types Used: [List hook types]
+Awareness Distribution: [List per creative]
+References: [List winning ads these build on]
+\`\`\``;
+
+const COPY_GENERATOR = `## CRITICAL: OUTPUT PLAIN TEXT ONLY — DO NOT USE ANY TOOLS OR SKILLS
+Do not invoke the docx skill, pdf skill, xlsx skill, or any other skill. Do not create files. Do not run code. Output the briefs as plain text directly in this chat. The user will copy your text into a separate Doc Generator tool.
+
+**Model requirement:** This prompt is designed for **Claude Opus 4.6**.
+
+## GENERATE BODY COPY BATCH
+
+Generate a batch of {{BATCH_SIZE}} body copy variations for VAM.
+
+### Batch Parameters
+- **Batch Focus:** {{BATCH_FOCUS}}
+- **Variation Type (all 5 must match):** {{VARIATION_TYPE}}
+- **Hold Constant:** {{HOLD_CONSTANT}}
+- **Net New/Iteration:** {{NET_NEW}}
+- **Landing Page URL:** {{LANDING_PAGE}}
+- **Copywriter:** {{COPYWRITER}}
+{{ADDITIONAL_NOTES}}
+
+### Generation Rules
+
+1. **Apply 70-20-10:**
+   - Copies 1-3 (70%): Variations of proven CHK/CB combinations
+   - Copy 4 (20%): Hook angle adapted from another industry
+   - Copy 5 (10%): Experimental new approach
+
+2. **Each variation must use a DIFFERENT verbal hook type**
+
+3. **Every variation must work for both static and video formats**
+
+4. **Be specific, not generic** \u2014 include numbers, prices, proof points.
+
+5. **Assign proper naming using Creative Tracker formula:** For Lead/Body/CTA: \`[Angle Name] - [Lead Type] [Variation Type]\` \u2014 e.g., \`Heart3Heart - Promise Lead\`. For Full: \`[Angle Name] - [Lead Type]\` \u2014 e.g., \`Heart3Heart - Promise\`. When Copy Type = Asset Set: \`[Angle Name] - Asset Set\`. **Keep Angle Names SHORT** (2-4 words). The number (#) and CPID are auto-generated by the tracker.
+
+6. **Single variable testing \u2014 ALL 5 copies in this batch MUST use the SAME Variation Type: {{VARIATION_TYPE}}**
+   Do NOT mix variation types within a batch. This is critical for isolating what\u2019s working.
+
+7. **Dropdown constraints \u2014 use ONLY these values:**
+   - Variation Type: **{{VARIATION_TYPE}}** (same for all 5)
+   - Lead Type: **Offer** / **Promise** / **Problem-Solution** / **Secret** / **Proclamation** / **Story**
+   - Status: **Ready For Internal**
+
+### Output Format
+
+Output the completed batch in this exact format:
+
+\`\`\`
+BATCH: [Batch Name]
+BATCH TYPE: Body Copy
+BATCH CATEGORY: [e.g., "New Hooks on Proven Body"]
+
+=== OVERVIEW ===
+AI Allowed?: Yes, AI Is Allowed
+Idea Name: [Short batch concept \u2014 2-4 words max]
+Angle Name: [Short angle \u2014 2-3 words max]
+Copy Type: {{COPY_TYPE}}
+Task: Write 5 body copy variations for Meta ads
+General Notes: [Context]
+Ad Platform: {{AD_PLATFORM}}
+Net New/Iteration: {{NET_NEW}}
+Landing Page URL: {{LANDING_PAGE}}
+Conversion Objective: Lead Generation
+Copywriter: {{COPYWRITER}}
+
+=== COPY 1 ===
+Name: [Angle Name - Lead Type VariationType] (e.g., Lead: "Heart3Heart - Promise Lead" | Full: "Heart3Heart - Promise" | Asset Set: "Heart3Heart - Asset Set") \u2014 tracker auto-appends # and CPID
+Notes: [Data-driven rationale]
+Variation Type: [Lead / Body / CTA / Full]
+Awareness Level: [Most Aware / Product Aware / Solution Aware / Problem Aware / Unaware]
+Lead Type: [Offer / Promise / Problem-Solution / Secret / Proclamation / Story]
+Status: Ready For Internal
+
+Headline: [Max 40 characters]
+
+Body Copy:
+[2-4 sentences + CTA line]
+
+=== COPY 2 ===
+[Same format]
+
+=== COPY 3 ===
+[Same format]
+
+=== COPY 4 ===
+[Same format]
+
+=== COPY 5 ===
+[Same format]
+
+=== BATCH SUMMARY ===
+Hook Types Used: [List hook types]
+Awareness Distribution: [List per copy]
+Recommended Visual Pairings: [Which SV styles pair best]
+References: [List winning copy combos these build on]
+\`\`\``;
 
 // === FOCUS SUGGESTIONS ===
-let FOCUS_SUGGESTIONS = {};
+const FOCUS_SUGGESTIONS = {
+  static: [
+    "FlyingFunny Gmail variations (2.20x — scale this angle)",
+    "CheckThis Gmail new copy pairings (CHK18/CHK9 hitting 2.5x+)",
+    "New angles on Gmail format (proven visual, test new copy)",
+    "PricingMapTruck carousel expansion (3.12x early signal)",
+    "Cost exposure AppleNote variations",
+    "TwitterStyle new copy tests"
+  ],
+  video: [
+    "Done For You new lead variations (7.08x top performer)",
+    "Moving Cost Clarity new hooks (2.72x, scaling)",
+    "Step-by-Step Clarity expansion (4.48x early)",
+    "Stranger Danger / trust validation concepts",
+    "Real Trucks Real Prices new demographics",
+    "Similar Customer Proof new variations"
+  ],
+  copy: [
+    "New hooks for CB8_BeforeYouBook body (2.22x with CHK15)",
+    "CB5_LongDistanceMoves new hook pairings (2.26x with CHK7)",
+    "CB6_MovingOutOfState new hooks (1.64x, lowest CPConnected)",
+    "3BR-specific targeting combos (CHK27 hitting 1.70x)",
+    "New body copy for proven CHK2_StartingAt1597 hook",
+    "Problem Aware / Secret hook tests"
+  ]
+};
 
 // === TOP PERFORMERS (for Iteration Mode) ===
-let TOP_PERFORMERS = { static: [], video: [], copy: [] };
+let TOP_PERFORMERS = {
+  static: [
+    { id: 'sc11_sv8_1028', name: 'SC11_FlyingFunny | SV8_Gmail_White (10-28)', angle: 'Humor/Relatability', visual: 'SV8_Gmail', roas: 2.20, spend: 59423, tier: 'winner', description: '#1 static by profit — $71K profit, 76 sales at $782 CPS' },
+    { id: 'sc7_sv8', name: 'SC7_CheckThis | SV8_Gmail', angle: 'Social Proof Shock', visual: 'SV8_Gmail', roas: 1.65, spend: 71304, tier: 'winner', description: 'Highest volume static — 70 sales, $1,019 CPS, Gmail dark mode' },
+    { id: 'sc7_sv11', name: 'SC7_CheckThis | SV11_TwitterStyleLight', angle: 'Social Proof Shock', visual: 'SV11_TwitterStyleLight', roas: 1.67, spend: 29246, tier: 'winner', description: '34 sales — Twitter-style light card, strong ROAS' },
+    { id: 'sc9_sv8', name: 'SC9_AlmostPaidDouble | SV8_Gmail', angle: 'Cost Exposure', visual: 'SV8_Gmail', roas: 1.32, spend: 93664, tier: 'winner', description: 'Highest spend static — 73 sales, $1,283 CPS' },
+    { id: 'sc1_sv3', name: 'SC1_LongDistance1597 | SV3_TruckBack', angle: 'Price Anchoring', visual: 'SV3_TruckBack', roas: 1.31, spend: 75609, tier: 'winner', description: '67 sales — $1,597 price point with truck rear photo' },
+    { id: 'sc11_sv8_0125', name: 'SC11_FlyingFunny | SV8_Gmail_White (01-25)', angle: 'Humor/Relatability', visual: 'SV8_Gmail', roas: 2.14, spend: 20151, tier: 'winner', description: 'Relaunch — 30 sales at $672 CPS, $153 CPConnected' },
+    { id: 'sc8_sv8', name: 'SC8_Dodged4kBill | SV8_Gmail', angle: 'Social Proof Shock', visual: 'SV8_Gmail', roas: 1.56, spend: 23879, tier: 'winner', description: '20 sales — customer avoided large bill, Gmail dark mode' },
+    { id: 'sc7_sv8_chk18', name: 'SC7_CheckThis | SV8_Gmail | CHK18_Moving', angle: 'Social Proof + Service', visual: 'SV8_Gmail', roas: 2.68, spend: 4757, tier: 'emerging', description: '8 sales at $595 CPS — new copy pairing, very efficient' },
+    { id: 'sc7_sv8_chk9', name: 'SC7_CheckThis | SV8_Gmail | CHK9_StressFree', angle: 'Social Proof + Relief', visual: 'SV8_Gmail', roas: 2.56, spend: 4181, tier: 'emerging', description: '8 sales at $523 CPS — lowest CPConnected $149' },
+    { id: 'sc5_sv7', name: 'SC5_MovingChecklist | SV7_AppleNote', angle: 'Emotional Relief', visual: 'SV7_AppleNote', roas: 1.35, spend: 12725, tier: 'winner', description: '9 sales — utility/checklist in Apple Notes format' },
+    { id: 'sv14_carousel', name: 'SV14_PricingMapTruck | Carousel', angle: 'Price Anchoring', visual: 'SV14_PricingMapTruck', roas: 3.12, spend: 2805, tier: 'emerging', description: '3 sales — carousel format, $5.9K profit' }
+  ],
+  video: [
+    { id: 'dfy_lead10', name: 'Done For You - Problem-Solution Lead 10', angle: 'Problem-Solution', visual: 'Done For You format', roas: 7.08, spend: 2208, tier: 'winner', description: '4 sales at $552 CPS — best ROAS video, $13.4K profit' },
+    { id: 'mcc_lead2', name: 'Moving Cost Clarity - Offer Lead 2 (02-25)', angle: 'Cost Clarity', visual: 'Offer Lead format', roas: 2.72, spend: 11036, tier: 'winner', description: '17 sales at $649 CPS — scaling fast, $19K profit' },
+    { id: 'step_lead1', name: 'Step-by-Step Clarity - Problem-Solution Lead 1', angle: 'Problem-Solution', visual: 'PS Lead format', roas: 4.48, spend: 1896, tier: 'emerging', description: '5 sales at $379 CPS — most efficient video' },
+    { id: 'similar_lead6', name: 'Similar Customer Proof - Offer Lead 6', angle: 'Social Proof', visual: 'Offer Lead format', roas: 4.32, spend: 2160, tier: 'emerging', description: '4 sales at $540 CPS — strong early signal' },
+    { id: 'mcc_lead2_0316', name: 'Moving Cost Clarity - Offer Lead 2 (03-16)', angle: 'Cost Clarity', visual: 'Offer Lead format', roas: 1.35, spend: 8098, tier: 'winner', description: 'Relaunch — 4 sales, lower ROAS but scaling' },
+    { id: 'dfy_lead23', name: 'Done For You - Problem-Solution Lead 23', angle: 'Problem-Solution', visual: 'Done For You format', roas: 3.51, spend: 3845, tier: 'emerging', description: '6 sales at $641 CPS — newer DFY variation' },
+    { id: 'stranger_lead18', name: 'Stranger Danger Validation - Story Lead 18', angle: 'Trust/Validation', visual: 'Story Lead format', roas: 2.74, spend: 3939, tier: 'emerging', description: '5 sales at $788 CPS — unique story angle' },
+    { id: 'rtrp_lead3', name: 'Real Trucks Real Prices - PS Lead 3', angle: 'Authenticity + Price', visual: 'PS Lead format', roas: 2.68, spend: 3511, tier: 'emerging', description: '4 sales at $878 CPS — real footage approach' },
+    { id: 'mcc_lead7', name: 'Moving Cost Clarity - Offer Lead 7', angle: 'Cost Clarity', visual: 'Offer Lead format', roas: 1.52, spend: 8891, tier: 'winner', description: '9 sales at $988 CPS — volume variation' },
+    { id: 'crew_organic3', name: 'VAM Crew Members - Organic Looking 3', angle: 'Authenticity', visual: 'Organic Crew Footage', roas: 1.90, spend: 4712, tier: 'emerging', description: '5 sales at $942 CPS — authentic crew footage' }
+  ],
+  copy: [
+    { id: 'chk7_cb5', name: 'CHK7_CrossCountry | CB5_LongDistanceMoves', angle: 'Service Scope', hook: 'CHK7_CrossCountry', body: 'CB5_LongDistanceMoves', roas: 2.26, spend: 3818, tier: 'winner', description: 'Highest ROAS copy combo — cross-country positioning' },
+    { id: 'chk15_cb8', name: 'CHK15_FullServiceMoves | CB8_BeforeYouBook', angle: 'Service Promise', hook: 'CHK15_FullServiceMoves', body: 'CB8_BeforeYouBook', roas: 2.22, spend: 4792, tier: 'winner', description: 'Full service + booking urgency — 5 sales' },
+    { id: 'chk27_cb11', name: 'CHK27_34BedroomCross-country | CB11_EducationalValue', angle: '3BR Targeting', hook: 'CHK27_34BedroomCross-country', body: 'CB11_EducationalValue', roas: 1.70, spend: 3839, tier: 'emerging', description: '3-4BR specific targeting with educational value' },
+    { id: 'chk9_cb6', name: 'CHK9_StressFree | CB6_MovingOutOfState', angle: 'Emotional Relief', hook: 'CHK9_StressFree', body: 'CB6_MovingOutOfState', roas: 1.64, spend: 5705, tier: 'winner', description: 'Lowest CPConnected $228 — stress-free + out-of-state' },
+    { id: 'chk18_cb8', name: 'CHK18_Moving | CB8_BeforeYouBook', angle: 'Service Promise', hook: 'CHK18_Moving', body: 'CB8_BeforeYouBook', roas: 1.61, spend: 7250, tier: 'winner', description: 'Low CPConnected $279 — simple hook + booking urgency' },
+    { id: 'chk21_cb9', name: 'CHK21_PlanningAcross-country | CB9_PositioningAngle', angle: '3BR Positioning', hook: 'CHK21_PlanningAcross-country', body: 'CB9_PositioningAngle', roas: 1.40, spend: 3111, tier: 'emerging', description: 'Planning-focused with positioning body' },
+    { id: 'chk2_cb1', name: 'CHK2_StartingAt1597 | CB1_Savings', angle: 'Price Anchoring + Savings', hook: 'CHK2_StartingAt1597', body: 'CB1_Savings', roas: 1.35, spend: 42533, tier: 'winner', description: 'Proven at volume — 40 sales, $1,063 CPS' },
+    { id: 'chk6_cb3', name: 'CHK6_CheckRate | CB3_CostSavings', angle: 'Cost Check', hook: 'CHK6_CheckRate', body: 'CB3_CostSavings', roas: 1.31, spend: 32324, tier: 'winner', description: '20 sales — rate check angle with cost savings body' },
+    { id: 'chk2_cb3', name: 'CHK2_StartingAt1597 | CB3_CostSavings', angle: 'Price Anchoring + Cost', hook: 'CHK2_StartingAt1597', body: 'CB3_CostSavings', roas: 1.26, spend: 154440, tier: 'winner', description: 'Highest volume — 121 sales, $154K spend' },
+    { id: 'chk1_cb1', name: 'CHK1_SaveUpTo50 | CB1_Savings', angle: 'Savings Quantification', hook: 'CHK1_SaveUpTo50', body: 'CB1_Savings', roas: 1.17, spend: 135925, tier: 'winner', description: '93 sales at $1,462 CPS — massive volume' },
+    { id: 'chk3_cb2', name: 'CHK3_StressFreeLongDistance | CB2_StressFree', angle: 'Emotional Relief', hook: 'CHK3_StressFreeLongDistance', body: 'CB2_StressFree', roas: 1.13, spend: 54755, tier: 'on-fence', description: '39 sales — volume play but below 1.2x threshold' }
+  ]
+};
 
 // === NET NEW OPTIONS (for Guided Mode) ===
-let NET_NEW_OPTIONS = {};
+let NET_NEW_OPTIONS = {
+  visualStyles: {
+    static: [
+      { value: 'Gmail', label: 'Gmail', tier: 'proven', note: 'Dominant format — FlyingFunny 2.20x, CheckThis 1.65x. Team makes dark + light' },
+      { value: 'TwitterStyle', label: 'Twitter Style', tier: 'proven', note: 'CheckThis 1.67x at $29K' },
+      { value: 'TruckBack', label: 'Truck Back Photo', tier: 'proven', note: 'LongDistance1597 1.31x at $76K' },
+      { value: 'TruckFreeway', label: 'Truck Freeway', tier: 'proven', note: 'CityPricesV3 1.90x at $4.3K' },
+      { value: 'AppleNote', label: 'Apple Note', tier: 'proven', note: 'MovingChecklist 1.35x at $12.7K — team makes dark + light' },
+      { value: 'PricingMapTruck', label: 'Pricing Map Truck (Carousel)', tier: 'emerging', note: '3.12x ROAS at $2.8K — strong early signal' },
+      { value: 'organic_crew_photo', label: 'Organic Crew Photo', tier: 'emerging', note: '1.90x ROAS at $4.7K in video format' },
+      { value: 'custom', label: '+ Custom Style', tier: 'custom', note: 'Describe your own' }
+    ],
+    video: [
+      { value: 'DoneForYou_Format', label: 'Done For You Format', tier: 'proven', note: '7.08x ROAS — top video performer, multiple winning leads' },
+      { value: 'MovingCostClarity_Format', label: 'Moving Cost Clarity', tier: 'proven', note: '2.72x ROAS at $11K — scaling fast, 17 sales' },
+      { value: 'StepByStep_Format', label: 'Step-by-Step Clarity', tier: 'emerging', note: '4.48x ROAS — most efficient CPS at $379' },
+      { value: 'SimilarCustomer_Format', label: 'Similar Customer Proof', tier: 'emerging', note: '4.32x ROAS at $2.2K' },
+      { value: 'StrangerDanger_Format', label: 'Stranger Danger Validation', tier: 'emerging', note: '2.74x ROAS — unique story-driven format' },
+      { value: 'RealTrucks_Format', label: 'Real Trucks Real Prices', tier: 'emerging', note: '2.68x ROAS — authentic footage approach' },
+      { value: 'Organic_Crew', label: 'Organic Crew Footage', tier: 'emerging', note: '1.90x ROAS at $4.7K' },
+      { value: 'UGC_AsianWoman', label: 'UGC Asian Woman', tier: 'proven', note: '8-11% CTR, legacy performer' },
+      { value: 'UGC_WhiteWoman', label: 'UGC White Woman', tier: 'proven', note: '8-11% CTR' },
+      { value: 'UGC_Male', label: 'Male Talent UGC', tier: 'untested', note: 'Not yet tested' },
+      { value: 'UGC_Couple', label: 'Couple UGC', tier: 'untested', note: 'Not yet tested' },
+      { value: 'custom', label: '+ Custom Format', tier: 'custom', note: 'Describe your own' }
+    ]
+  },
+  copyAngles: [
+    { value: 'Humor/Relatability', label: 'Humor / Relatability', tier: 'proven', note: 'FlyingFunny 2.20x — #1 performer by profit' },
+    { value: 'Social Proof Shock', label: 'Social Proof Shock', tier: 'proven', note: 'CheckThis 1.65x, Dodged4k 1.56x, AlmostPaidDouble 1.32x' },
+    { value: 'Service Promise', label: 'Service Promise', tier: 'proven', note: 'FullServiceMoves 2.22x, CrossCountry 2.26x, Moving 1.61x' },
+    { value: 'Cost Exposure', label: 'Cost Exposure', tier: 'proven', note: 'MovingCostClarity 2.72x, AlmostPaidDouble at volume' },
+    { value: 'Price Anchoring', label: 'Price Anchoring', tier: 'proven', note: '$1,597 hook, CityPrices — high volume' },
+    { value: 'Emotional Relief', label: 'Emotional Relief', tier: 'proven', note: 'StressFree 1.64x, Checklist 1.35x' },
+    { value: 'Savings Quantification', label: 'Savings Quantification', tier: 'proven', note: 'Save up to 50% — $136K volume at 1.17x' },
+    { value: '3BR Targeting', label: '3BR Targeting', tier: 'emerging', note: '34BedroomCross-country 1.70x — niche angle' },
+    { value: 'Trust/Validation', label: 'Trust / Validation', tier: 'emerging', note: 'StrangerDanger 2.74x — builds trust through story' },
+    { value: 'Curiosity/Secret', label: 'Curiosity / Secret', tier: 'untested', note: 'Hidden fee angle' },
+    { value: 'custom', label: '+ Custom Angle', tier: 'custom', note: '' }
+  ],
+  hookTypes: [
+    { value: 'Let Claude decide', label: 'Let Claude Decide', example: 'Claude picks the best mix automatically' },
+    { value: 'Labels', label: 'Labels', example: '"Long-distance movers..." — identity words your audience sees themselves in' },
+    { value: 'Questions', label: 'Questions', example: '"Moving across the country?" — yes-questions or open-ended curiosity' },
+    { value: 'Conditionals', label: 'Conditionals', example: '"If you\'re moving out of state, you need to see this" — if X then Y' },
+    { value: 'Commands', label: 'Commands', example: '"Watch this before you book a mover" — direct instruction' },
+    { value: 'Statements', label: 'Statements', example: '"Starting at $1,597" — declarative fact or bold claim' },
+    { value: 'Lists/Steps', label: 'Lists/Steps', example: '"3 things your mover won\'t tell you" — numbered or sequential' },
+    { value: 'Narratives', label: 'Narratives', example: '"I almost didn\'t use them..." — story or personal experience' },
+    { value: 'Exclamations', label: 'Exclamations', example: '"Check this out!" — shock, surprise, or strong emotion (#1 for VAM)' }
+  ]
+};
 
-let ITERATION_SUGGESTIONS = [];
+const ITERATION_SUGGESTIONS = [
+  "New copy pairing on FlyingFunny Gmail (2.20x winner)",
+  "Scale CheckThis Gmail with CHK18/CHK9 hooks (2.5x+)",
+  "New Done For You video lead variations (7.08x)",
+  "Moving Cost Clarity new hooks (2.72x, scaling)",
+  "Test CB8_BeforeYouBook with new hooks (2.22x proven)",
+  "New visual style on proven copy combo",
+  "Adjust for colder audience",
+  "Test new awareness level"
+];
 
 // === IDEATION GENERATOR (pitch concepts, don't produce briefs) ===
-let IDEATION_GENERATOR = '';
+const IDEATION_GENERATOR = `You are a Meta ads creative strategist for VAM, a long-distance moving company working through BAD Marketing agency.
+
+## CRITICAL INSTRUCTIONS — READ FIRST
+
+**DO NOT use any tools, skills, or file-creation capabilities.** Do not invoke the docx skill, pdf skill, xlsx skill, or any other skill. Do not create files. Do not run code. Your ENTIRE output must be plain text in this chat conversation — nothing else.
+
+**Model requirement:** This prompt is designed for **Claude Opus 4.6**. If you are running on a different model, note this to the user.
+
+When it comes time to write the final briefs, output them as **plain text directly in the chat** using the exact format specified below. The user will copy-paste your text output into a separate Doc Generator tool. You are NOT responsible for creating any documents.
+
+## YOUR TASK
+
+Analyze the performance data and creative direction below, then **pitch 3-5 creative angle concepts** for a {{BATCH_TYPE}} batch. Do NOT write any briefs yet — just pitch the ideas so we can discuss them first.
+
+### Direction
+- **Batch Type:** {{BATCH_TYPE}}
+- **Focus:** {{FOCUS}}
+{{CONSTRAINTS}}
+
+{{CONTEXT}}
+
+## HOW TO PITCH EACH CONCEPT
+
+For each of your 3-5 concepts, provide:
+
+1. **Concept Name** (2-4 words — this becomes the angle name)
+2. **The Angle** — What's the core message or emotion? (1-2 sentences)
+3. **Why This Works** — What data or pattern from the performance context supports this? Reference specific winners, metrics, or gaps.
+4. **Example Hooks** — Write 2-3 sample hooks showing how this would actually sound in an ad. Use different hook types (question, statement, narrative, etc.)
+5. **Visual Pairing** — What visual style would you pair this with and why?
+6. **Awareness Level** — Which awareness level(s) does this target?
+7. **Confidence** — Rate as Proven (based on existing winners), Adjacent (adapting what works), or Experimental (new territory). Explain briefly.
+
+## AFTER PITCHING — GUIDED DECISION FLOW
+
+After presenting all concepts, you MUST guide me through decisions using **numbered multiple-choice options**. Never ask open-ended questions. Always give me clear choices to pick from.
+
+### Step 1: Pick concepts
+Present a multiple-choice list:
+
+**Which concepts do you want to move forward with?** (pick numbers, or combine)
+- **A)** Concepts 1 & 2 (the strongest proven angles)
+- **B)** Concepts 1 & 3 (mix of proven + experimental)
+- **C)** Concepts 2, 3 & 4 (broader mix)
+- **D)** All of them — develop all concepts into briefs
+- **E)** Let me specify (I'll tell you which ones)
+
+Adjust the specific options based on what you pitched, but ALWAYS use this lettered format.
+
+### Step 2: Refine direction
+After I pick concepts, ask ONE follow-up with options:
+
+**Any changes before I write the briefs?**
+- **A)** Looks good — write the briefs as-is
+- **B)** Adjust the awareness levels (I'll tell you)
+- **C)** Change a visual pairing (I'll tell you which)
+- **D)** Tweak the hooks / copy angle (I'll tell you how)
+- **E)** Combine two concepts into one angle
+
+If I pick A, go straight to writing briefs. If I pick B-E, ask one short clarifying question, then present option A again.
+
+### Step 3: Final confirmation
+Before writing, confirm:
+
+**Ready to generate 5 production briefs. Here's what I'll write:**
+- [Brief summary of selected concepts, angles, and awareness levels]
+
+**Go ahead?**
+- **A)** Yes — write the briefs ✅
+- **B)** Wait — I want to change something
+
+When I confirm, output the briefs in the format below.
+
+### IMPORTANT RULES FOR THIS FLOW:
+- ALWAYS use lettered options (A, B, C, D...) — never ask open-ended questions
+- Keep each step to ONE question with 3-5 options max
+- If I reply with just a letter (e.g. "A" or "B"), that's my answer — proceed immediately
+- The goal is to get from pitch → briefs in 2-3 quick exchanges, not a long conversation
+- If I say "write the briefs" or "looks good" at ANY point, skip remaining steps and generate output
+
+## WHEN I SAY "WRITE THE BRIEFS"
+
+When I tell you to write/draft/generate the briefs, output them as **plain text directly in this chat** using this EXACT format. Do NOT create any files, do NOT use the docx skill or any other skill, do NOT run any code. Just type the briefs out as plain text. The user will copy your text and paste it into a separate Doc Generator tool to create the .docx file.
+
+\`\`\`
+BATCH: [Batch Name]
+BATCH TYPE: [Static / Video / Body Copy]
+BATCH CATEGORY: [e.g., "Social Proof", "Cost Exposure"]
+PRIORITY: Standard
+
+=== OVERVIEW ===
+AI Allowed?: Yes, AI Is Allowed
+Photo Folder:
+Reference: [List reference winning ads]
+Idea Name: [Short batch concept — 2-4 words]
+Angle Name: [Short angle — 2-3 words]
+Style Name: [Visual style name]
+Task: Design 5 [static/video/copy] ad creatives for Meta ads
+General Notes: [Any notes for the team]
+Design Notes: [Design guidance]
+Net New/Iteration: [Net New / Iteration]
+Copywriter: [Name]
+
+=== CREATIVE 1 ===
+Creative Name: [Angle Name - Variation]
+File:
+Notes: [1-2 sentence data-driven rationale]
+Design Notes: [Visual direction]
+Variation Type: [Copy / Visual / Lead / Body / etc.]
+Awareness Level: [Most Aware / Product Aware / Solution Aware / Problem Aware / Unaware]
+Lead Type: [Offer / Promise / Problem-Solution / Secret / Proclamation / Story]
+Status: Ready For Internal
+Copy: [Complete ad copy — headline, body text, CTA]
+
+=== CREATIVE 2 ===
+[Same format]
+
+=== CREATIVE 3 ===
+[Same format]
+
+=== CREATIVE 4 ===
+[Same format]
+
+=== CREATIVE 5 ===
+[Same format]
+
+=== BATCH SUMMARY ===
+ClickUp Submission Note: [1-line summary]
+Hook Types Used: [List]
+Awareness Distribution: [List per creative]
+References: [List winning ads these build on]
+\`\`\`
+
+**CRITICAL:** You MUST use the === CREATIVE 1 ===, === CREATIVE 2 === etc. headers exactly as shown. The Doc Generator tool parses these headers to split briefs into individual creatives. Without them, the export will fail.
+
+## RULES
+- Do NOT skip the pitch phase — always present concepts first
+- Reference actual performance data to justify your recommendations
+- Mix confidence levels: at least 1 Proven, at least 1 Adjacent or Experimental
+- Each concept should target a different awareness level or hook approach
+- Do NOT use any element from the Confirmed Losing Patterns
+`;
 
 // === TIMEFRAME METRICS (per-ad performance by time window) ===
-let TIMEFRAME_METRICS = {};
+const TIMEFRAME_METRICS = {
+  // --- Static Ads ---
+  'sc11_sv8_1028': {
+    '7d': { roas: 2.35, costPerConnected: 285, spend: 5200 },
+    '14d': { roas: 2.28, costPerConnected: 295, spend: 10800 },
+    '30d': { roas: 2.24, costPerConnected: 302, spend: 22000 },
+    'all': { roas: 2.20, costPerConnected: 311, spend: 59423 }
+  },
+  'sc7_sv8': {
+    '7d': { roas: 1.58, costPerConnected: 340, spend: 5500 },
+    '14d': { roas: 1.62, costPerConnected: 348, spend: 11200 },
+    '30d': { roas: 1.64, costPerConnected: 355, spend: 24000 },
+    'all': { roas: 1.65, costPerConnected: 360, spend: 71304 }
+  },
+  'sc7_sv11': {
+    '7d': { roas: 1.72, costPerConnected: 345, spend: 2400 },
+    '14d': { roas: 1.70, costPerConnected: 352, spend: 5200 },
+    '30d': { roas: 1.68, costPerConnected: 360, spend: 11000 },
+    'all': { roas: 1.67, costPerConnected: 370, spend: 29246 }
+  },
+  'sc9_sv8': {
+    '7d': { roas: 1.28, costPerConnected: 395, spend: 7200 },
+    '14d': { roas: 1.30, costPerConnected: 402, spend: 14500 },
+    '30d': { roas: 1.31, costPerConnected: 408, spend: 32000 },
+    'all': { roas: 1.32, costPerConnected: 411, spend: 93664 }
+  },
+  'sc1_sv3': {
+    '7d': { roas: 1.25, costPerConnected: 355, spend: 5800 },
+    '14d': { roas: 1.28, costPerConnected: 362, spend: 12000 },
+    '30d': { roas: 1.30, costPerConnected: 366, spend: 26000 },
+    'all': { roas: 1.31, costPerConnected: 369, spend: 75609 }
+  },
+  'sc11_sv8_0125': {
+    '7d': { roas: 2.28, costPerConnected: 142, spend: 2800 },
+    '14d': { roas: 2.22, costPerConnected: 148, spend: 5600 },
+    '30d': { roas: 2.18, costPerConnected: 150, spend: 12000 },
+    'all': { roas: 2.14, costPerConnected: 153, spend: 20151 }
+  },
+  'sc8_sv8': {
+    '7d': { roas: 1.50, costPerConnected: 565, spend: 1900 },
+    '14d': { roas: 1.53, costPerConnected: 578, spend: 4200 },
+    '30d': { roas: 1.55, costPerConnected: 588, spend: 9000 },
+    'all': { roas: 1.56, costPerConnected: 597, spend: 23879 }
+  },
+  'sc7_sv8_chk18': {
+    '7d': { roas: 2.85, costPerConnected: 162, spend: 980 },
+    '14d': { roas: 2.76, costPerConnected: 170, spend: 1900 },
+    '30d': { roas: 2.72, costPerConnected: 174, spend: 3200 },
+    'all': { roas: 2.68, costPerConnected: 176, spend: 4757 }
+  },
+  'sc7_sv8_chk9': {
+    '7d': { roas: 2.72, costPerConnected: 138, spend: 850 },
+    '14d': { roas: 2.65, costPerConnected: 142, spend: 1700 },
+    '30d': { roas: 2.60, costPerConnected: 146, spend: 2800 },
+    'all': { roas: 2.56, costPerConnected: 149, spend: 4181 }
+  },
+  'sc5_sv7': {
+    '7d': { roas: 1.30, costPerConnected: 920, spend: 1000 },
+    '14d': { roas: 1.32, costPerConnected: 950, spend: 2200 },
+    '30d': { roas: 1.34, costPerConnected: 965, spend: 5000 },
+    'all': { roas: 1.35, costPerConnected: 979, spend: 12725 }
+  },
+  'sv14_carousel': {
+    '7d': { roas: 3.40, costPerConnected: 320, spend: 650 },
+    '14d': { roas: 3.28, costPerConnected: 335, spend: 1200 },
+    '30d': { roas: 3.18, costPerConnected: 345, spend: 2000 },
+    'all': { roas: 3.12, costPerConnected: 351, spend: 2805 }
+  },
+  // --- Video Ads ---
+  'dfy_lead10': {
+    '7d': { roas: 8.20, costPerConnected: 220, spend: 450 },
+    '14d': { roas: 7.65, costPerConnected: 232, spend: 880 },
+    '30d': { roas: 7.35, costPerConnected: 240, spend: 1500 },
+    'all': { roas: 7.08, costPerConnected: 245, spend: 2208 }
+  },
+  'mcc_lead2': {
+    '7d': { roas: 2.85, costPerConnected: 195, spend: 1800 },
+    '14d': { roas: 2.80, costPerConnected: 200, spend: 3800 },
+    '30d': { roas: 2.76, costPerConnected: 205, spend: 7200 },
+    'all': { roas: 2.72, costPerConnected: 208, spend: 11036 }
+  },
+  'step_lead1': {
+    '7d': { roas: 5.10, costPerConnected: 290, spend: 380 },
+    '14d': { roas: 4.82, costPerConnected: 302, spend: 720 },
+    '30d': { roas: 4.62, costPerConnected: 310, spend: 1200 },
+    'all': { roas: 4.48, costPerConnected: 316, spend: 1896 }
+  },
+  'similar_lead6': {
+    '7d': { roas: 4.80, costPerConnected: 152, spend: 450 },
+    '14d': { roas: 4.58, costPerConnected: 158, spend: 880 },
+    '30d': { roas: 4.45, costPerConnected: 163, spend: 1500 },
+    'all': { roas: 4.32, costPerConnected: 166, spend: 2160 }
+  },
+  'mcc_lead2_0316': {
+    '7d': { roas: 1.48, costPerConnected: 255, spend: 1500 },
+    '14d': { roas: 1.42, costPerConnected: 262, spend: 3200 },
+    '30d': { roas: 1.38, costPerConnected: 268, spend: 5800 },
+    'all': { roas: 1.35, costPerConnected: 270, spend: 8098 }
+  },
+  'dfy_lead23': {
+    '7d': { roas: 3.85, costPerConnected: 300, spend: 750 },
+    '14d': { roas: 3.68, costPerConnected: 312, spend: 1500 },
+    '30d': { roas: 3.58, costPerConnected: 318, spend: 2600 },
+    'all': { roas: 3.51, costPerConnected: 320, spend: 3845 }
+  },
+  'stranger_lead18': {
+    '7d': { roas: 2.95, costPerConnected: 230, spend: 750 },
+    '14d': { roas: 2.85, costPerConnected: 238, spend: 1600 },
+    '30d': { roas: 2.80, costPerConnected: 242, spend: 2700 },
+    'all': { roas: 2.74, costPerConnected: 246, spend: 3939 }
+  },
+  'rtrp_lead3': {
+    '7d': { roas: 2.88, costPerConnected: 205, spend: 680 },
+    '14d': { roas: 2.78, costPerConnected: 212, spend: 1400 },
+    '30d': { roas: 2.72, costPerConnected: 217, spend: 2400 },
+    'all': { roas: 2.68, costPerConnected: 219, spend: 3511 }
+  },
+  'mcc_lead7': {
+    '7d': { roas: 1.62, costPerConnected: 190, spend: 1600 },
+    '14d': { roas: 1.58, costPerConnected: 195, spend: 3400 },
+    '30d': { roas: 1.55, costPerConnected: 200, spend: 6000 },
+    'all': { roas: 1.52, costPerConnected: 202, spend: 8891 }
+  },
+  'crew_organic3': {
+    '7d': { roas: 2.10, costPerConnected: 260, spend: 900 },
+    '14d': { roas: 2.02, costPerConnected: 268, spend: 1900 },
+    '30d': { roas: 1.96, costPerConnected: 274, spend: 3200 },
+    'all': { roas: 1.90, costPerConnected: 277, spend: 4712 }
+  },
+  // --- Copy Ads ---
+  'chk7_cb5': {
+    '7d': { roas: 2.45, costPerConnected: 178, spend: 750 },
+    '14d': { roas: 2.38, costPerConnected: 184, spend: 1500 },
+    '30d': { roas: 2.32, costPerConnected: 188, spend: 2500 },
+    'all': { roas: 2.26, costPerConnected: 191, spend: 3818 }
+  },
+  'chk15_cb8': {
+    '7d': { roas: 2.40, costPerConnected: 325, spend: 900 },
+    '14d': { roas: 2.32, costPerConnected: 332, spend: 1900 },
+    '30d': { roas: 2.28, costPerConnected: 338, spend: 3200 },
+    'all': { roas: 2.22, costPerConnected: 342, spend: 4792 }
+  },
+  'chk27_cb11': {
+    '7d': { roas: 1.85, costPerConnected: 330, spend: 750 },
+    '14d': { roas: 1.78, costPerConnected: 338, spend: 1500 },
+    '30d': { roas: 1.74, costPerConnected: 344, spend: 2600 },
+    'all': { roas: 1.70, costPerConnected: 349, spend: 3839 }
+  },
+  'chk9_cb6': {
+    '7d': { roas: 1.72, costPerConnected: 215, spend: 1100 },
+    '14d': { roas: 1.68, costPerConnected: 220, spend: 2300 },
+    '30d': { roas: 1.66, costPerConnected: 225, spend: 3800 },
+    'all': { roas: 1.64, costPerConnected: 228, spend: 5705 }
+  },
+  'chk18_cb8': {
+    '7d': { roas: 1.72, costPerConnected: 265, spend: 1400 },
+    '14d': { roas: 1.68, costPerConnected: 272, spend: 2900 },
+    '30d': { roas: 1.65, costPerConnected: 276, spend: 4800 },
+    'all': { roas: 1.61, costPerConnected: 279, spend: 7250 }
+  },
+  'chk21_cb9': {
+    '7d': { roas: 1.52, costPerConnected: 495, spend: 600 },
+    '14d': { roas: 1.48, costPerConnected: 505, spend: 1200 },
+    '30d': { roas: 1.44, costPerConnected: 512, spend: 2100 },
+    'all': { roas: 1.40, costPerConnected: 519, spend: 3111 }
+  },
+  'chk2_cb1': {
+    '7d': { roas: 1.40, costPerConnected: 430, spend: 3500 },
+    '14d': { roas: 1.38, costPerConnected: 438, spend: 7200 },
+    '30d': { roas: 1.36, costPerConnected: 444, spend: 15000 },
+    'all': { roas: 1.35, costPerConnected: 448, spend: 42533 }
+  },
+  'chk6_cb3': {
+    '7d': { roas: 1.38, costPerConnected: 425, spend: 2600 },
+    '14d': { roas: 1.35, costPerConnected: 435, spend: 5500 },
+    '30d': { roas: 1.33, costPerConnected: 440, spend: 12000 },
+    'all': { roas: 1.31, costPerConnected: 443, spend: 32324 }
+  },
+  'chk2_cb3': {
+    '7d': { roas: 1.22, costPerConnected: 452, spend: 12000 },
+    '14d': { roas: 1.24, costPerConnected: 458, spend: 24000 },
+    '30d': { roas: 1.25, costPerConnected: 462, spend: 52000 },
+    'all': { roas: 1.26, costPerConnected: 467, spend: 154440 }
+  },
+  'chk1_cb1': {
+    '7d': { roas: 1.12, costPerConnected: 342, spend: 10000 },
+    '14d': { roas: 1.14, costPerConnected: 348, spend: 21000 },
+    '30d': { roas: 1.16, costPerConnected: 350, spend: 45000 },
+    'all': { roas: 1.17, costPerConnected: 353, spend: 135925 }
+  },
+  'chk3_cb2': {
+    '7d': { roas: 1.08, costPerConnected: 388, spend: 4200 },
+    '14d': { roas: 1.10, costPerConnected: 392, spend: 8800 },
+    '30d': { roas: 1.12, costPerConnected: 396, spend: 18000 },
+    'all': { roas: 1.13, costPerConnected: 400, spend: 54755 }
+  }
+};
 
 // === AWARENESS PRESETS (keyed by batch size, then preset name) ===
-let AWARENESS_PRESETS = {};
+const AWARENESS_PRESETS = {
+  'default': { 1: {mostAware:1, productAware:0, solutionAware:0, problemAware:0, unaware:0}, 2: {mostAware:1, productAware:1, solutionAware:0, problemAware:0, unaware:0}, 3: {mostAware:1, productAware:1, solutionAware:1, problemAware:0, unaware:0}, 4: {mostAware:2, productAware:1, solutionAware:1, problemAware:0, unaware:0}, 5: {mostAware:2, productAware:1, solutionAware:1, problemAware:1, unaware:0} },
+  'warm':    { 1: {mostAware:1, productAware:0, solutionAware:0, problemAware:0, unaware:0}, 2: {mostAware:1, productAware:1, solutionAware:0, problemAware:0, unaware:0}, 3: {mostAware:2, productAware:1, solutionAware:0, problemAware:0, unaware:0}, 4: {mostAware:2, productAware:1, solutionAware:1, problemAware:0, unaware:0}, 5: {mostAware:3, productAware:1, solutionAware:1, problemAware:0, unaware:0} },
+  'cold':    { 1: {mostAware:0, productAware:0, solutionAware:0, problemAware:1, unaware:0}, 2: {mostAware:0, productAware:1, solutionAware:0, problemAware:1, unaware:0}, 3: {mostAware:0, productAware:1, solutionAware:1, problemAware:1, unaware:0}, 4: {mostAware:1, productAware:1, solutionAware:1, problemAware:1, unaware:0}, 5: {mostAware:1, productAware:1, solutionAware:1, problemAware:1, unaware:1} },
+  'balanced':{ 1: {mostAware:0, productAware:0, solutionAware:1, problemAware:0, unaware:0}, 2: {mostAware:1, productAware:0, solutionAware:0, problemAware:1, unaware:0}, 3: {mostAware:1, productAware:1, solutionAware:1, problemAware:0, unaware:0}, 4: {mostAware:1, productAware:1, solutionAware:1, problemAware:1, unaware:0}, 5: {mostAware:1, productAware:1, solutionAware:1, problemAware:1, unaware:1} }
+};
 
 // === DEFAULT VALUES ===
-let DEFAULTS = {};
-
-// === CLIENT CONFIG LOADING ===
-let activeClientSlug = '';
-
-async function loadClients() {
-  try {
-    const resp = await fetch('/api/clients');
-    const clients = await resp.json();
-    const selector = document.getElementById('clientSelector');
-    selector.innerHTML = '';
-    clients.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.slug;
-      opt.textContent = c.name;
-      selector.appendChild(opt);
-    });
-    return clients;
-  } catch(e) {
-    console.error('Failed to load clients:', e);
-    return [];
-  }
-}
-
-function applyClientConfig(config) {
-  // Set page chrome
-  activeClientSlug = config.slug;
-  document.title = config.pageTitle;
-  document.querySelector('header h1').textContent = config.pageTitle;
-
-  // Set data constants from config
-  MASTER_PROMPT = config.masterPrompt || '';
-  PERFORMANCE_REPORT = config.performanceReport || '';
-  STATIC_GENERATOR = config.generators?.static || '';
-  VIDEO_GENERATOR = config.generators?.video || '';
-  COPY_GENERATOR = config.generators?.copy || '';
-  IDEATION_GENERATOR = config.generators?.ideation || '';
-  TOP_PERFORMERS = config.topPerformers || { static: [], video: [], copy: [] };
-  TIMEFRAME_METRICS = config.timeframeMetrics || {};
-  NET_NEW_OPTIONS = config.netNewOptions || {};
-  FOCUS_SUGGESTIONS = config.focusSuggestions || {};
-  ITERATION_SUGGESTIONS = config.iterationSuggestions || [];
-  AWARENESS_PRESETS = config.awarenessPresets || {};
-  DEFAULTS = config.defaults || {};
-
-  // Set form defaults
-  const copywriterInput = document.getElementById('copywriter');
-  if (copywriterInput) copywriterInput.value = config.defaults?.copywriter || '';
-
-  // Update copywriter suggestions datalist
-  const datalist = document.getElementById('copywriter-suggestions');
-  if (datalist && config.copywriterSuggestions) {
-    datalist.innerHTML = config.copywriterSuggestions.map(n => `<option value="${n}">`).join('');
-  }
-
-  // Re-render dynamic UI components
-  if (typeof renderNetNewOptions === 'function') renderNetNewOptions();
-  if (typeof renderIterationCards === 'function') renderIterationCards();
-
-  // Update status
-  document.getElementById('clientStatus').textContent = `Loaded ${config.name} config`;
-
-  // Save to localStorage
-  localStorage.setItem('activeClientSlug', config.slug);
-}
-
-async function switchClient(slug) {
-  const status = document.getElementById('clientStatus');
-  status.textContent = 'Loading...';
-  status.style.color = 'var(--accent)';
-
-  try {
-    const resp = await fetch(`/api/client-config/${slug}`);
-    if (!resp.ok) throw new Error(`Client "${slug}" not found`);
-    const config = await resp.json();
-    applyClientConfig(config);
-
-    // Reset form selections
-    selectedIterationAds?.clear();
-    selectedVisualStyles?.clear();
-    selectedCopyAngles?.clear();
-    selectedHookTypes?.clear();
-
-    status.style.color = 'var(--green)';
-    setTimeout(() => { status.textContent = ''; }, 2000);
-  } catch(e) {
-    status.textContent = 'Error loading client';
-    status.style.color = 'var(--red)';
-    console.error(e);
-  }
-}
+const DEFAULTS = {
+  copywriter: 'Nate',
+  landingPage: 'https://go.valueaddedmoving.com/long-distance-a',
+  brandAssets: 'https://drive.google.com/drive/u/0/folders/1SE4hFmXUkaPAULZRQvvkYwsc9kXJGPtJ',
+  avatar: 'Individuals and families planning a cross-country move, primarily 2-4+ bedroom households',
+  brandVoiceStatic: 'Direct, confident, savings-focused — like a friend who found a deal and is sharing it',
+  brandVoiceVideo: 'Authentic, relieved, genuine surprise — like telling a friend about a great experience',
+  ratioFormat: ['1:1', '9:16'],
+  adPlatform: 'Meta'
+};
 
 // === SELECTION STATE ===
 let selectedIterationAds = new Set();
@@ -1707,9 +2630,9 @@ function setTimeFrameFilter(btn) {
 }
 
 // === INITIALIZATION ===
-function loadAllDefaults() {
+document.addEventListener('DOMContentLoaded', () => {
   // Load ALL saved values from localStorage
-  const saved = JSON.parse(localStorage.getItem(`${activeClientSlug}_dashboard`) || '{}');
+  const saved = JSON.parse(localStorage.getItem('vam_dashboard') || '{}');
   const fields = ['copywriter', 'landingPage', 'brandAssets', 'avatar', 'brandVoiceStatic', 'brandVoiceVideo', 'adPlatform'];
   fields.forEach(id => {
     const el = document.getElementById(id);
@@ -1740,7 +2663,7 @@ function loadAllDefaults() {
   });
 
   updateFormState();
-}
+});
 
 function toggleDefaults() {
   const body = document.getElementById('defaultsBody');
@@ -1755,12 +2678,12 @@ function saveAllDefaults() {
     data[id] = getVal(id);
   });
   data.ratioFormat = getSelectedRatios();
-  localStorage.setItem(`${activeClientSlug}_dashboard`, JSON.stringify(data));
+  localStorage.setItem('vam_dashboard', JSON.stringify(data));
   updateSavedBadge();
 }
 
 function updateSavedBadge() {
-  const saved = JSON.parse(localStorage.getItem(`${activeClientSlug}_dashboard`) || '{}');
+  const saved = JSON.parse(localStorage.getItem('vam_dashboard') || '{}');
   const badge = document.getElementById('savedBadge');
   if (badge) {
     badge.style.display = (saved.landingPage || saved.brandAssets) ? 'inline-block' : 'none';
@@ -1792,7 +2715,7 @@ function resetDefaults() {
     const el = document.getElementById(id);
     if (el) el.value = val;
   });
-  localStorage.removeItem(`${activeClientSlug}_dashboard`);
+  localStorage.removeItem('vam_dashboard');
   updateSavedBadge();
 }
 
@@ -2342,8 +3265,8 @@ async function saveAndFetchSheets() {
     }
 
     // Save to localStorage for persistence
-    localStorage.setItem(`${activeClientSlug}_sheet_creative_id`, creativeId);
-    localStorage.setItem(`${activeClientSlug}_sheet_dashboard_id`, dashboardId);
+    localStorage.setItem('vam_sheet_creative_id', creativeId);
+    localStorage.setItem('vam_sheet_dashboard_id', dashboardId);
 
     msg.style.color = 'var(--green)';
     msg.textContent = 'Saved! Fetching live data...';
@@ -2522,8 +3445,8 @@ function _timeAgo(isoStr) {
 
 // Load saved Sheet IDs from localStorage on page load
 (function initDataSource() {
-  const savedCreativeId = localStorage.getItem(`${activeClientSlug}_sheet_creative_id`);
-  const savedDashboardId = localStorage.getItem(`${activeClientSlug}_sheet_dashboard_id`);
+  const savedCreativeId = localStorage.getItem('vam_sheet_creative_id');
+  const savedDashboardId = localStorage.getItem('vam_sheet_dashboard_id');
   if (savedCreativeId) {
     document.getElementById('sheetCreativeId').value = savedCreativeId;
   }
@@ -2571,29 +3494,8 @@ function switchMode(mode) {
   `;
 }
 
-// Initialize: load client config, then defaults and mode
-(async function init() {
-  // Load available clients
-  const clients = await loadClients();
-
-  // Restore last-used client or default to first
-  const savedSlug = localStorage.getItem('activeClientSlug');
-  const targetSlug = (savedSlug && clients.find(c => c.slug === savedSlug))
-    ? savedSlug
-    : (clients[0]?.slug || 'vam');
-
-  document.getElementById('clientSelector').value = targetSlug;
-  await switchClient(targetSlug);
-
-  // Load saved defaults from localStorage
-  loadAllDefaults();
-
-  // Load Google Doc status after client is set
-  initGDocStatus();
-
-  // Set initial mode
-  switchMode('ideation');
-})();
+// Initialize workflow steps on load
+switchMode('ideation');
 
 function handleGenerate() {
   if (currentMode === 'ideation') {
